@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\TransactionFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * @property int $id
+ * @property int $account_id
+ * @property string $transaction_type
+ * @property string $amount
+ * @property string|null $description
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
+#[Fillable(['account_id', 'transaction_type', 'amount', 'description'])]
+class Transaction extends Model
+{
+    /** @use HasFactory<TransactionFactory> */
+    use HasFactory;
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
+    }
+}
