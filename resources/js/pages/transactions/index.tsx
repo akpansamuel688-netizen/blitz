@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { Clock3, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { transactions } from '@/routes/transactions';
+import transactions from '@/routes/transactions';
 
 type Transaction = {
     id: number;
@@ -79,7 +79,7 @@ Transactions.layout = {
     breadcrumbs: [
         {
             title: 'Transactions',
-            href: transactions(),
+            href: transactions.index(),
         },
     ],
 };

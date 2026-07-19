@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
-import { account, accounts, transfer } from '@/routes/accounts';
-import { transactions } from '@/routes/transactions';
+import accounts, { transfer } from '@/routes/accounts';
+import transactions from '@/routes/transactions';
 
 type Account = {
     id: number;
@@ -97,7 +97,7 @@ export default function AccountShow({ account, transactions: accountTransactions
                             <CardDescription>Send money to another account.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <Form {...transfer(account.id).form()} className="space-y-4">
+                            <Form {...transfer.form(account.id)} className="space-y-4">
                                 {({ processing, errors }) => (
                                     <>
                                         <div className="grid gap-2">
@@ -167,7 +167,7 @@ export default function AccountShow({ account, transactions: accountTransactions
                                     Latest movements on this account.
                                 </CardDescription>
                             </div>
-                            <Link href={transactions()} className="inline-flex items-center gap-2 text-primary">
+                            <Link href={transactions.index()} className="inline-flex items-center gap-2 text-primary">
                                 See all
                                 <ChevronRight className="size-4" />
                             </Link>
@@ -216,7 +216,7 @@ AccountShow.layout = {
     breadcrumbs: [
         {
             title: 'Accounts',
-            href: accounts(),
+            href: accounts.index(),
         },
     ],
 };

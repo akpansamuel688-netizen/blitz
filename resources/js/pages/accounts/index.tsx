@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import InputError from '@/components/input-error';
-import { accounts, account, store } from '@/routes/accounts';
-import { transactions } from '@/routes/transactions';
+import accounts, { store } from '@/routes/accounts';
+import transactions from '@/routes/transactions';
 
 type Account = {
     id: number;
@@ -161,7 +161,7 @@ export default function Accounts({ accounts: userAccounts, totalBalance, account
                                         </div>
                                         <div className="mt-4 flex items-center justify-between gap-4 text-sm text-muted-foreground">
                                             <span>{accountItem.account_number}</span>
-                                            <Link href={account(accountItem.id)} className="inline-flex items-center gap-2 font-medium text-primary">
+                                            <Link href={accounts.show(accountItem.id)} className="inline-flex items-center gap-2 font-medium text-primary">
                                                 View
                                                 <ChevronRight className="size-4" />
                                             </Link>
@@ -175,7 +175,7 @@ export default function Accounts({ accounts: userAccounts, totalBalance, account
 
                 <div className="flex justify-end">
                     <Button asChild>
-                        <Link href={transactions()}>
+                        <Link href={transactions.index()}>
                             View all transactions
                         </Link>
                     </Button>
@@ -189,7 +189,7 @@ Accounts.layout = {
     breadcrumbs: [
         {
             title: 'Accounts',
-            href: accounts(),
+            href: accounts.index(),
         },
     ],
 };
