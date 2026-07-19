@@ -1,20 +1,23 @@
 import { Form, Head } from '@inertiajs/react';
-import { AlertCircle, Calendar, DollarSign, Plus } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar, Plus, Receipt } from 'lucide-react';
+import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import InputError from '@/components/input-error';
-import { store as storeBill, index as billsIndex } from '@/routes/bills';
+import { formatCurrency } from '@/lib/money';
+import { cn } from '@/lib/utils';
+import bills from '@/routes/bills';
 
 type Bill = {
     id: number;
     name: string;
     amount: string;
     frequency: string;
-    next_due_date: string;
+    next_due_date: string | null;
     status: string;
-    category?: string;
+    category?: string | null;
     auto_pay: boolean;
     account_name: string;
 };
@@ -24,87 +27,80 @@ type Props = {
     accounts: Array<{ id: number; name: string }>;
 };
 
-function formatCurrency(value: string) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(Number(value));
-}
-
-const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    paid: 'bg-green-100 text-green-800',
-    overdue: 'bg-red-100 text-red-800',
+const statusStyles: Record<string, string> = {
+    pending: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+    paid: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+    overdue: 'bg-rose-500/10 text-rose-700 dark:text-rose-400',
 };
 
-export default function Bills({ bills, accounts }: Props) {
-    const overdueBills = bills.filter((b) => b.status === 'overdue');
-    const upcomingBills = bills.filter((b) => b.status === 'pending');
-    const totalMonthly = bills
+export default function Bills({ bills: billItems, accounts }: Props) {
+    const overdueBills = billItems.filter((b) => b.status === 'overdue');
+    const totalMonthly = billItems
         .filter((b) => b.frequency === 'monthly')
-        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+        .reduce((sum, b) => sum + Number(b.amount), 0);
 
     return (
         <>
-            <Head title="Bills & Payments" />
+            <Head title="Bills & payments" />
 
             <div className="space-y-6">
+                <div>
+                    <h1 className="text-2xl font-semibold tracking-tight">Bills & payments</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Track due dates, monthly obligations, and autopay readiness.
+                    </p>
+                </div>
+
                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="border">
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium">Total Bills</CardTitle>
+                    <Card className="border shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardDescription>Total bills</CardDescription>
+                            <CardTitle className="text-2xl">{billItems.length}</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <p className="text-2xl font-semibold">{bills.length}</p>
-                        </CardContent>
                     </Card>
-                    <Card className="border">
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className={`text-2xl font-semibold ${overdueBills.length > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <Card className="border shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardDescription>Overdue</CardDescription>
+                            <CardTitle
+                                className={cn(
+                                    'text-2xl',
+                                    overdueBills.length > 0 ? 'text-rose-600' : 'text-brand',
+                                )}
+                            >
                                 {overdueBills.length}
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card className="border">
-                        <CardHeader>
-                            <CardTitle className="text-sm font-medium">Monthly Spending</CardTitle>
+                            </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <p className="text-2xl font-semibold">{formatCurrency(totalMonthly.toString())}</p>
-                        </CardContent>
+                    </Card>
+                    <Card className="border border-brand/15 bg-gradient-to-br from-brand-subtle to-card shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardDescription>Monthly bill load</CardDescription>
+                            <CardTitle className="text-2xl">{formatCurrency(totalMonthly)}</CardTitle>
+                        </CardHeader>
                     </Card>
                 </div>
 
-                <Card className="border">
+                <Card className="border shadow-sm">
                     <CardHeader>
-                        <CardTitle>Add Bill</CardTitle>
-                        <CardDescription>Create a new bill or payment reminder.</CardDescription>
+                        <CardTitle>Add bill</CardTitle>
+                        <CardDescription>Create a payment reminder for an account you own.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Form action={storeBill().url} method="post" className="grid gap-4 sm:grid-cols-2">
+                        <Form {...bills.store.form()} className="grid gap-4 sm:grid-cols-2">
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="name">Bill Name</Label>
-                                        <Input id="name" name="name" placeholder="e.g., Electric Bill" required />
+                                        <Label htmlFor="name">Bill name</Label>
+                                        <Input id="name" name="name" placeholder="Electric bill" required />
                                         <InputError message={errors.name} />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="amount">Amount</Label>
-                                        <Input id="amount" name="amount" type="number" step="0.01" placeholder="0.00" required />
+                                        <Input id="amount" name="amount" type="number" step="0.01" min="0.01" placeholder="0.00" required />
                                         <InputError message={errors.amount} />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="frequency">Frequency</Label>
-                                        <select
-                                            id="frequency"
-                                            name="frequency"
-                                            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            required
-                                        >
+                                        <select id="frequency" name="frequency" className="h-9 rounded-md border border-input bg-background px-3 text-sm" required>
                                             <option value="monthly">Monthly</option>
                                             <option value="quarterly">Quarterly</option>
                                             <option value="annually">Annually</option>
@@ -112,79 +108,79 @@ export default function Bills({ bills, accounts }: Props) {
                                         <InputError message={errors.frequency} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="next_due_date">Next Due Date</Label>
+                                        <Label htmlFor="next_due_date">Next due date</Label>
                                         <Input id="next_due_date" name="next_due_date" type="date" required />
                                         <InputError message={errors.next_due_date} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="account_id">Pay From Account</Label>
-                                        <select
-                                            id="account_id"
-                                            name="account_id"
-                                            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            required
-                                        >
+                                        <Label htmlFor="account_id">Pay from</Label>
+                                        <select id="account_id" name="account_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm" required>
                                             <option value="">Select account</option>
                                             {accounts.map((acc) => (
-                                                <option key={acc.id} value={acc.id}>
-                                                    {acc.name}
-                                                </option>
+                                                <option key={acc.id} value={acc.id}>{acc.name}</option>
                                             ))}
                                         </select>
                                         <InputError message={errors.account_id} />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="category">Category</Label>
-                                        <Input id="category" name="category" placeholder="e.g., Utilities" />
+                                        <Input id="category" name="category" placeholder="Utilities" />
+                                        <InputError message={errors.category} />
                                     </div>
                                     <div className="sm:col-span-2 flex justify-end">
-                                        <Button type="submit" disabled={processing}>
-                                            <Plus className="mr-2 size-4" />
-                                            Add Bill
+                                        <Button type="submit" disabled={processing || accounts.length === 0}>
+                                            <Plus className="size-4" />
+                                            Add bill
                                         </Button>
                                     </div>
+                                    {accounts.length === 0 && (
+                                        <p className="sm:col-span-2 text-sm text-muted-foreground">
+                                            Open an account first before adding bills.
+                                        </p>
+                                    )}
                                 </>
                             )}
                         </Form>
                     </CardContent>
                 </Card>
 
-                <Card className="border">
+                <Card className="border shadow-sm">
                     <CardHeader>
-                        <CardTitle>Your Bills</CardTitle>
-                        <CardDescription>Track and manage your upcoming payments.</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                            <Receipt className="size-5 text-brand" />
+                            Your bills
+                        </CardTitle>
+                        <CardDescription>Upcoming and overdue obligations.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {bills.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-muted p-6 text-center text-sm text-muted-foreground">
-                                No bills yet. Add one to get started.
+                        {billItems.length === 0 ? (
+                            <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+                                No bills yet. Add one to start tracking payments.
                             </div>
                         ) : (
-                            <div className="grid gap-4">
-                                {bills.map((bill) => (
-                                    <div
-                                        key={bill.id}
-                                        className="rounded-3xl border border-border bg-background p-4 shadow-sm"
-                                    >
+                            <div className="grid gap-3">
+                                {billItems.map((bill) => (
+                                    <div key={bill.id} className="rounded-2xl border border-border p-4">
                                         <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2">
                                                     <p className="font-medium">{bill.name}</p>
-                                                    <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${statusColors[bill.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
-                                                        {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
+                                                    <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium capitalize', statusStyles[bill.status] ?? 'bg-muted')}>
+                                                        {bill.status}
                                                     </span>
+                                                    {bill.auto_pay && <Badge variant="secondary">Auto-pay</Badge>}
                                                 </div>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {bill.account_name} • {bill.category && `${bill.category} • `}
-                                                    {bill.frequency}
+                                                <p className="mt-1 text-sm text-muted-foreground">
+                                                    {bill.account_name}
+                                                    {bill.category ? ` · ${bill.category}` : ''}
+                                                    {` · ${bill.frequency}`}
                                                 </p>
                                             </div>
-                                            <p className="text-right font-semibold">{formatCurrency(bill.amount)}</p>
+                                            <p className="shrink-0 font-semibold tabular-nums">{formatCurrency(bill.amount)}</p>
                                         </div>
-                                        <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                                        <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                                             <Calendar className="size-4" />
-                                            Due: {new Date(bill.next_due_date).toLocaleDateString()}
-                                            {bill.auto_pay && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Auto-pay enabled</span>}
+                                            Due {bill.next_due_date ? new Date(bill.next_due_date).toLocaleDateString() : '—'}
                                         </div>
                                     </div>
                                 ))}
@@ -198,10 +194,5 @@ export default function Bills({ bills, accounts }: Props) {
 }
 
 Bills.layout = {
-    breadcrumbs: [
-        {
-            title: 'Bills & Payments',
-            href: billsIndex().url,
-        },
-    ],
+    breadcrumbs: [{ title: 'Bills', href: bills.index() }],
 };

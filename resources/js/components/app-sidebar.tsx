@@ -4,7 +4,12 @@ import {
     LayoutDashboard,
     LayoutGrid,
     ListChecks,
+    PiggyBank,
+    Receipt,
+    Repeat2,
     Shield,
+    Tags,
+    Target,
     Users,
     Wallet,
 } from 'lucide-react';
@@ -23,7 +28,12 @@ import {
 } from '@/components/ui/sidebar';
 import accounts from '@/routes/accounts';
 import admin from '@/routes/admin';
+import bills from '@/routes/bills';
+import budgets from '@/routes/budgets';
+import categories from '@/routes/categories';
 import { dashboard } from '@/routes';
+import recurringTransfers from '@/routes/recurring-transfers';
+import savingsGoals from '@/routes/savings-goals';
 import transactions from '@/routes/transactions';
 import type { NavItem } from '@/types';
 
@@ -42,6 +52,34 @@ const bankingNavItems: NavItem[] = [
         title: 'Transactions',
         href: transactions.index(),
         icon: ListChecks,
+    },
+];
+
+const moneyNavItems: NavItem[] = [
+    {
+        title: 'Bills',
+        href: bills.index(),
+        icon: Receipt,
+    },
+    {
+        title: 'Budgets',
+        href: budgets.index(),
+        icon: PiggyBank,
+    },
+    {
+        title: 'Savings goals',
+        href: savingsGoals.index(),
+        icon: Target,
+    },
+    {
+        title: 'Recurring',
+        href: recurringTransfers.index(),
+        icon: Repeat2,
+    },
+    {
+        title: 'Categories',
+        href: categories.index(),
+        icon: Tags,
     },
 ];
 
@@ -90,6 +128,7 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={bankingNavItems} label="Banking" />
+                <NavMain items={moneyNavItems} label="Money tools" />
                 {auth.isAdmin && <NavMain items={adminNavItems} label="Administration" />}
             </SidebarContent>
 

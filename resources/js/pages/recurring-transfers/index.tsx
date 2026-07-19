@@ -1,19 +1,23 @@
 import { Form, Head } from '@inertiajs/react';
 import { Plus, Repeat2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import InputError from '@/components/input-error';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import InputError from '@/components/input-error';import { store as storeRecurring, index as recurringIndex } from '@/routes/recurring-transfers';
+import { formatCurrency } from '@/lib/money';
+import recurringTransfers from '@/routes/recurring-transfers';
+
 type Transfer = {
     id: number;
     source_account: string;
     destination_account: string;
     amount: string;
     frequency: string;
-    next_transfer_date: string;
+    next_transfer_date: string | null;
     is_active: boolean;
-    description?: string;
+    description?: string | null;
 };
 
 type Props = {
@@ -21,77 +25,61 @@ type Props = {
     accounts: Array<{ id: number; name: string }>;
 };
 
-function formatCurrency(value: string) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(Number(value));
-}
-
 export default function RecurringTransfers({ transfers, accounts }: Props) {
-    const activeTransfers = transfers.filter((t) => t.is_active);
+    const activeCount = transfers.filter((t) => t.is_active).length;
 
     return (
         <>
-            <Head title="Recurring Transfers" />
+            <Head title="Recurring transfers" />
 
             <div className="space-y-6">
-                <Card className="border">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h1 className="text-2xl font-semibold tracking-tight">Recurring transfers</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Schedule automatic moves between your Blitz accounts.
+                        </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{activeCount} active schedule{activeCount === 1 ? '' : 's'}</p>
+                </div>
+
+                <Card className="border shadow-sm">
                     <CardHeader>
-                        <CardTitle>Schedule Recurring Transfer</CardTitle>
-                        <CardDescription>Automatically move money between your accounts on a schedule.</CardDescription>
+                        <CardTitle>Schedule transfer</CardTitle>
+                        <CardDescription>Source and destination must be different accounts you own.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Form action={storeRecurring().url} method="post" className="grid gap-4 sm:grid-cols-2">
+                        <Form {...recurringTransfers.store.form()} className="grid gap-4 sm:grid-cols-2">
                             {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="source_account_id">From Account</Label>
-                                        <select
-                                            id="source_account_id"
-                                            name="source_account_id"
-                                            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            required
-                                        >
+                                        <Label htmlFor="source_account_id">From</Label>
+                                        <select id="source_account_id" name="source_account_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm" required>
                                             <option value="">Select account</option>
                                             {accounts.map((acc) => (
-                                                <option key={acc.id} value={acc.id}>
-                                                    {acc.name}
-                                                </option>
+                                                <option key={acc.id} value={acc.id}>{acc.name}</option>
                                             ))}
                                         </select>
                                         <InputError message={errors.source_account_id} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="destination_account_id">To Account</Label>
-                                        <select
-                                            id="destination_account_id"
-                                            name="destination_account_id"
-                                            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            required
-                                        >
+                                        <Label htmlFor="destination_account_id">To</Label>
+                                        <select id="destination_account_id" name="destination_account_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm" required>
                                             <option value="">Select account</option>
                                             {accounts.map((acc) => (
-                                                <option key={acc.id} value={acc.id}>
-                                                    {acc.name}
-                                                </option>
+                                                <option key={acc.id} value={acc.id}>{acc.name}</option>
                                             ))}
                                         </select>
                                         <InputError message={errors.destination_account_id} />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="amount">Amount</Label>
-                                        <Input id="amount" name="amount" type="number" step="0.01" placeholder="0.00" required />
+                                        <Input id="amount" name="amount" type="number" step="0.01" min="0.01" placeholder="0.00" required />
                                         <InputError message={errors.amount} />
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="frequency">Frequency</Label>
-                                        <select
-                                            id="frequency"
-                                            name="frequency"
-                                            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                            required
-                                        >
+                                        <select id="frequency" name="frequency" className="h-9 rounded-md border border-input bg-background px-3 text-sm" required>
                                             <option value="daily">Daily</option>
                                             <option value="weekly">Weekly</option>
                                             <option value="biweekly">Bi-weekly</option>
@@ -100,63 +88,77 @@ export default function RecurringTransfers({ transfers, accounts }: Props) {
                                         <InputError message={errors.frequency} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="next_transfer_date">First Transfer Date</Label>
+                                        <Label htmlFor="next_transfer_date">First transfer date</Label>
                                         <Input id="next_transfer_date" name="next_transfer_date" type="date" required />
                                         <InputError message={errors.next_transfer_date} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label htmlFor="end_date">End Date (Optional)</Label>
+                                        <Label htmlFor="end_date">End date (optional)</Label>
                                         <Input id="end_date" name="end_date" type="date" />
                                         <InputError message={errors.end_date} />
                                     </div>
                                     <div className="grid gap-2 sm:col-span-2">
-                                        <Label htmlFor="description">Description (Optional)</Label>
-                                        <Input id="description" name="description" placeholder="e.g., Savings transfer" />
+                                        <Label htmlFor="description">Description</Label>
+                                        <Input id="description" name="description" placeholder="Automatic savings" />
+                                        <InputError message={errors.description} />
                                     </div>
                                     <div className="sm:col-span-2 flex justify-end">
-                                        <Button type="submit" disabled={processing}>
-                                            <Plus className="mr-2 size-4" />
-                                            Schedule Transfer
+                                        <Button type="submit" disabled={processing || accounts.length < 2}>
+                                            <Plus className="size-4" />
+                                            Schedule transfer
                                         </Button>
                                     </div>
+                                    {accounts.length < 2 && (
+                                        <p className="sm:col-span-2 text-sm text-muted-foreground">
+                                            You need at least two accounts to schedule a transfer.
+                                        </p>
+                                    )}
                                 </>
                             )}
                         </Form>
                     </CardContent>
                 </Card>
 
-                <Card className="border">
+                <Card className="border shadow-sm">
                     <CardHeader>
-                        <CardTitle>Your Recurring Transfers</CardTitle>
-                        <CardDescription>Monitor scheduled automatic transfers.</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                            <Repeat2 className="size-5 text-brand" />
+                            Scheduled transfers
+                        </CardTitle>
+                        <CardDescription>Active and paused automatic moves.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {transfers.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-muted p-6 text-center text-sm text-muted-foreground">
+                            <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
                                 No recurring transfers scheduled yet.
                             </div>
                         ) : (
-                            <div className="grid gap-4">
+                            <div className="grid gap-3">
                                 {transfers.map((transfer) => (
-                                    <div key={transfer.id} className="rounded-3xl border border-border bg-background p-4 shadow-sm">
-                                        <div className="flex items-center justify-between gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <Repeat2 className="size-5 text-muted-foreground" />
-                                                    <div>
-                                                        <p className="font-medium">
-                                                            {transfer.source_account} → {transfer.destination_account}
-                                                        </p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {transfer.frequency.charAt(0).toUpperCase() + transfer.frequency.slice(1)} {transfer.description && `• ${transfer.description}`}
-                                                        </p>
-                                                    </div>
+                                    <div key={transfer.id} className="rounded-2xl border border-border p-4">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <p className="font-medium">
+                                                        {transfer.source_account} → {transfer.destination_account}
+                                                    </p>
+                                                    <Badge variant={transfer.is_active ? 'default' : 'secondary'}>
+                                                        {transfer.is_active ? 'Active' : 'Inactive'}
+                                                    </Badge>
                                                 </div>
-                                                {!transfer.is_active && <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">Inactive</span>}
+                                                <p className="mt-1 text-sm capitalize text-muted-foreground">
+                                                    {transfer.frequency}
+                                                    {transfer.description ? ` · ${transfer.description}` : ''}
+                                                </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-semibold">{formatCurrency(transfer.amount)}</p>
-                                                <p className="text-sm text-muted-foreground">Next: {new Date(transfer.next_transfer_date).toLocaleDateString()}</p>
+                                                <p className="font-semibold tabular-nums">{formatCurrency(transfer.amount)}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Next{' '}
+                                                    {transfer.next_transfer_date
+                                                        ? new Date(transfer.next_transfer_date).toLocaleDateString()
+                                                        : '—'}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
@@ -171,10 +173,5 @@ export default function RecurringTransfers({ transfers, accounts }: Props) {
 }
 
 RecurringTransfers.layout = {
-    breadcrumbs: [
-        {
-            title: 'Recurring Transfers',
-            href: recurringIndex().url,
-        },
-    ],
+    breadcrumbs: [{ title: 'Recurring transfers', href: recurringTransfers.index() }],
 };

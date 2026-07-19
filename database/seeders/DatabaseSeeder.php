@@ -3,7 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\Account;
+use App\Models\Bill;
+use App\Models\Budget;
+use App\Models\RecurringTransfer;
+use App\Models\SavingsGoal;
 use App\Models\Transaction;
+use App\Models\TransactionCategory;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -78,8 +83,21 @@ class DatabaseSeeder extends Seeder
 
         [$checking, $savings] = $created;
 
+        $groceries = TransactionCategory::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Groceries',
+            'color' => '#0F6B66',
+        ]);
+
+        $income = TransactionCategory::query()->create([
+            'user_id' => $user->id,
+            'name' => 'Income',
+            'color' => '#10B981',
+        ]);
+
         Transaction::create([
             'account_id' => $checking->id,
+            'category_id' => $groceries->id,
             'transaction_type' => 'Debit',
             'amount' => 72.34,
             'description' => 'Groceries at Market Street',
@@ -89,6 +107,7 @@ class DatabaseSeeder extends Seeder
 
         Transaction::create([
             'account_id' => $checking->id,
+            'category_id' => $income->id,
             'transaction_type' => 'Credit',
             'amount' => 1250.00,
             'description' => 'Direct deposit payroll',
@@ -116,11 +135,59 @@ class DatabaseSeeder extends Seeder
 
         Transaction::create([
             'account_id' => $checking->id,
+            'category_id' => $income->id,
             'transaction_type' => 'Credit',
             'amount' => 480.00,
             'description' => 'Client invoice payment',
             'created_at' => now()->subDays(5),
             'updated_at' => now()->subDays(5),
+        ]);
+
+        Bill::query()->create([
+            'user_id' => $user->id,
+            'account_id' => $checking->id,
+            'name' => 'Electric utility',
+            'amount' => 118.50,
+            'frequency' => 'monthly',
+            'next_due_date' => now()->addDays(8)->toDateString(),
+            'status' => 'pending',
+            'category' => 'Utilities',
+            'auto_pay' => false,
+        ]);
+
+        Budget::query()->create([
+            'user_id' => $user->id,
+            'category_id' => $groceries->id,
+            'name' => 'Grocery budget',
+            'limit' => 400,
+            'period' => 'monthly',
+            'period_start' => now()->startOfMonth()->toDateString(),
+            'period_end' => now()->endOfMonth()->toDateString(),
+            'spent' => 72.34,
+            'is_active' => true,
+        ]);
+
+        RecurringTransfer::query()->create([
+            'user_id' => $user->id,
+            'source_account_id' => $checking->id,
+            'destination_account_id' => $savings->id,
+            'amount' => 150,
+            'frequency' => 'monthly',
+            'next_transfer_date' => now()->addDays(3)->toDateString(),
+            'description' => 'Pay yourself first',
+            'is_active' => true,
+        ]);
+
+        SavingsGoal::query()->create([
+            'user_id' => $user->id,
+            'account_id' => $savings->id,
+            'name' => 'Emergency fund',
+            'description' => 'Three months of operating runway',
+            'target_amount' => 15000,
+            'current_amount' => 4200,
+            'target_date' => now()->addMonths(10)->toDateString(),
+            'status' => 'active',
+            'color' => '#0F6B66',
         ]);
     }
 }
