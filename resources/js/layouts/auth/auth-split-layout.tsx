@@ -21,9 +21,7 @@ export default function AuthSplitLayout({
                     href={home()}
                     className="relative z-20 flex items-center gap-2.5 text-lg font-semibold tracking-tight"
                 >
-                    <span className="flex size-9 items-center justify-center rounded-lg bg-white text-brand shadow-sm">
-                        <BrandMark className="size-4" />
-                    </span>
+                    <BrandMark framed className="size-9 shadow-sm" />
                     {productName}
                 </Link>
                 <div className="relative z-20 mt-auto">
@@ -43,9 +41,7 @@ export default function AuthSplitLayout({
                         href={home()}
                         className="relative z-20 flex items-center justify-center gap-2 lg:hidden"
                     >
-                        <span className="flex size-10 items-center justify-center rounded-lg bg-brand text-brand-foreground shadow-sm">
-                            <BrandMark className="size-5" />
-                        </span>
+                        <BrandMark framed className="size-10 shadow-sm" />
                         <span className="font-semibold tracking-tight">{productName}</span>
                     </Link>
                     <div className="flex flex-col items-start gap-2 text-left sm:items-center sm:text-center">

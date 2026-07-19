@@ -26,8 +26,11 @@ export const brand = {
     },
     images: {
         og: '/images/og-default.svg',
-        logo: '/images/brand-mark.svg',
+        logo: '/images/logo.svg',
+        mark: '/images/brand-mark.svg',
         wordmark: '/images/wordmark.svg',
+        favicon: '/favicon.svg',
+        appleTouchIcon: '/apple-touch-icon.png',
     },
     seo: {
         titleDefault: 'Blitz — Banking for people who run something',

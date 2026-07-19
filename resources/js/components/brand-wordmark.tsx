@@ -29,21 +29,23 @@ export default function BrandWordmark({
     size = 'md',
 }: Props) {
     const s = sizeMap[size];
+    const markSize = size === 'sm' ? 'size-7' : size === 'md' ? 'size-9' : 'size-11';
 
     const content = (
         <>
-            <span
-                className={cn(
-                    'flex items-center justify-center shadow-sm',
-                    s.pad,
-                    inverted
-                        ? 'bg-white text-brand'
-                        : 'bg-brand text-brand-foreground',
-                    markClassName,
-                )}
-            >
-                <BrandMark className={cn(s.mark === 'size-7' ? 'size-4' : s.mark === 'size-9' ? 'size-5' : 'size-6')} />
-            </span>
+            {inverted ? (
+                <BrandMark framed className={cn(markSize, 'shadow-sm', markClassName)} />
+            ) : (
+                <span
+                    className={cn(
+                        'flex items-center justify-center overflow-hidden shadow-sm',
+                        s.pad,
+                        markClassName,
+                    )}
+                >
+                    <BrandMark framed className="size-full" />
+                </span>
+            )}
             {!markOnly && (
                 <span
                     className={cn(

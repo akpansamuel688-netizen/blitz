@@ -1,5 +1,22 @@
-<svg width="160" height="40" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="40" height="40" rx="10" fill="#0F6B66"/>
-  <path d="M22.8 5.5 8.2 24.1h8.4l-2.6 14.4L29.8 19.9h-8.6L22.8 5.5Z" fill="#F7F6F2"/>
-  <text x="52" y="27" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="22" font-weight="600" fill="#0C1222" letter-spacing="-0.02em">Blitz</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" fill="none" role="img" aria-label="Blitz">
+  <defs>
+    <linearGradient id="wm-bg" x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#148F87"/>
+      <stop offset="1" stop-color="#0A4F4B"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="10" fill="url(#wm-bg)"/>
+  <path
+    fill="#F7F6F2"
+    d="M23.5 6.2 10.2 22.2c-.3.37-.04.95.44.95h7.55l-2.05 10.5c-.14.7.73 1.12 1.2.59L30.4 18.7c.34-.38.07-.96-.45-.96h-7.55l1.9-9.5c.14-.7-.73-1.12-1.2-.59Z"
+  />
+  <text
+    x="52"
+    y="27"
+    fill="#0C1222"
+    font-family="Instrument Sans, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    font-size="22"
+    font-weight="650"
+    letter-spacing="-0.03em"
+  >Blitz</text>
 </svg>

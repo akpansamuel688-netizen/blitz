@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 64" fill="none" role="img" aria-label="Blitz">
+  <defs>
+    <linearGradient id="logo-bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#148F87"/>
+      <stop offset="1" stop-color="#0A4F4B"/>
+    </linearGradient>
+  </defs>
+  <!-- Mark -->
+  <rect width="64" height="64" rx="16" fill="url(#logo-bg)"/>
+  <path
+    fill="#F7F6F2"
+    d="M37.4 9.8 16.3 35.2c-.5.6-.07 1.55.72 1.55h12.4l-3.35 17.2c-.22 1.12 1.18 1.8 1.94.95L48.3 28.4c.55-.62.12-1.58-.72-1.58H35.1l3.05-15.55c.22-1.13-1.18-1.81-1.94-.97Z"
+  />
+  <!-- Wordmark -->
+  <text
+    x="80"
+    y="42"
+    fill="#0C1222"
+    font-family="Instrument Sans, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    font-size="34"
+    font-weight="650"
+    letter-spacing="-0.04em"
+  >Blitz</text>
+</svg>

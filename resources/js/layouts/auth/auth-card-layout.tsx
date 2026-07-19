@@ -27,9 +27,7 @@ export default function AuthCardLayout({
                     href={home()}
                     className="flex items-center gap-2.5 self-center font-medium"
                 >
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-brand text-brand-foreground shadow-sm">
-                        <BrandMark className="size-4" />
-                    </div>
+                    <BrandMark framed className="size-9 shadow-sm" />
                     <span className="font-semibold tracking-tight">{brand.name}</span>
                 </Link>
 
