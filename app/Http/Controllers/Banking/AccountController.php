@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Banking;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
-use App\Models\Transaction;
 use App\Services\Banking\TransferService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -109,7 +108,7 @@ class AccountController extends Controller
 
         $data = $request->validate([
             'destination_account_id' => ['required', 'exists:accounts,id'],
-            'amount' => ['required', 'numeric', 'min:0.01'],
+            'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/', 'not_in:0,0.0,0.00'],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
