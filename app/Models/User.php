@@ -86,6 +86,11 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(Transfer::class);
     }
 
+    public function beneficiaries(): HasMany
+    {
+        return $this->hasMany(Beneficiary::class);
+    }
+
     public function isAdmin(): bool
     {
         return (bool) $this->is_admin;

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Banking\AccountController;
 use App\Http\Controllers\Banking\BillController;
+use App\Http\Controllers\Banking\BeneficiaryController;
 use App\Http\Controllers\Banking\BudgetController;
 use App\Http\Controllers\Banking\CategoryController;
 use App\Http\Controllers\Banking\DashboardController;
@@ -28,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
     Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
+    Route::delete('beneficiaries/{beneficiary}', [BeneficiaryController::class, 'destroy'])->name('beneficiaries.destroy');
 
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');

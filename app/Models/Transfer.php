@@ -9,13 +9,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'user_id', 'source_account_id', 'destination_account_id', 'transfer_type', 'status',
-    'amount', 'currency', 'recipient_name', 'recipient_account_number', 'bank_name',
+    'amount', 'fee_amount', 'currency', 'recipient_name', 'recipient_account_number', 'bank_name',
     'swift_bic', 'iban', 'description', 'failure_reason', 'completed_at',
 ])]
 class Transfer extends Model
 {
     protected $casts = [
         'amount' => 'decimal:2',
+        'fee_amount' => 'decimal:2',
         'completed_at' => 'datetime',
     ];
 

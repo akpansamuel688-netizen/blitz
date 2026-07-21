@@ -16,19 +16,24 @@ class StoreTransferRequest extends FormRequest
     {
         $userId = $this->user()->id;
         $ownedAccount = Rule::exists('accounts', 'id')->where('user_id', $userId);
+        $ownedBeneficiary = Rule::exists('beneficiaries', 'id')->where('user_id', $userId);
+        $needsRecipientDetails = in_array($this->input('transfer_type'), ['domestic', 'wire'], true) && ! $this->filled('beneficiary_id');
 
         return [
             'transfer_type' => ['required', Rule::in(['internal', 'domestic', 'wire'])],
             'source_account_id' => ['required', $ownedAccount],
             'destination_account_id' => [Rule::requiredIf($this->input('transfer_type') === 'internal'), 'nullable', $ownedAccount, 'different:source_account_id'],
             'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/', 'not_in:0,0.0,0.00'],
+            'fee_amount' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
+            'beneficiary_id' => ['nullable', $ownedBeneficiary],
+            'save_beneficiary' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string', 'max:255'],
-            'recipient_name' => [Rule::requiredIf(in_array($this->input('transfer_type'), ['domestic', 'wire'], true)), 'nullable', 'string', 'max:150'],
-            'recipient_account_number' => [Rule::requiredIf($this->input('transfer_type') === 'domestic'), 'nullable', 'string', 'max:34', 'regex:/^[A-Za-z0-9 -]+$/'],
-            'bank_name' => [Rule::requiredIf($this->input('transfer_type') === 'domestic'), 'nullable', 'string', 'max:150'],
-            'swift_bic' => [Rule::requiredIf($this->input('transfer_type') === 'wire'), 'nullable', 'regex:/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/'],
-            'iban' => [Rule::requiredIf($this->input('transfer_type') === 'wire'), 'nullable', 'regex:/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/'],
-            'wire_bank_name' => [Rule::requiredIf($this->input('transfer_type') === 'wire'), 'nullable', 'string', 'max:150'],
+            'recipient_name' => [Rule::requiredIf($needsRecipientDetails), 'nullable', 'string', 'max:150'],
+            'recipient_account_number' => [Rule::requiredIf($needsRecipientDetails && $this->input('transfer_type') === 'domestic'), 'nullable', 'string', 'max:34', 'regex:/^[A-Za-z0-9 -]+$/'],
+            'bank_name' => [Rule::requiredIf($needsRecipientDetails && $this->input('transfer_type') === 'domestic'), 'nullable', 'string', 'max:150'],
+            'swift_bic' => [Rule::requiredIf($needsRecipientDetails && $this->input('transfer_type') === 'wire'), 'nullable', 'regex:/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/'],
+            'iban' => [Rule::requiredIf($needsRecipientDetails && $this->input('transfer_type') === 'wire'), 'nullable', 'regex:/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/'],
+            'wire_bank_name' => [Rule::requiredIf($needsRecipientDetails && $this->input('transfer_type') === 'wire'), 'nullable', 'string', 'max:150'],
         ];
     }
 

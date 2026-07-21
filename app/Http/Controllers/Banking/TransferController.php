@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Banking;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Banking\StoreTransferRequest;
 use App\Models\Account;
+use App\Models\Beneficiary;
 use App\Models\Transfer;
 use App\Services\Banking\TransferService;
 use App\Support\Money;
@@ -23,7 +24,7 @@ class TransferController extends Controller
             ->latest()->limit(50)->get()
             ->map(fn (Transfer $transfer) => [
                 'id' => $transfer->id, 'transfer_type' => $transfer->transfer_type, 'status' => $transfer->status,
-                'amount' => Money::format($transfer->amount), 'currency' => $transfer->currency,
+                'amount' => Money::format($transfer->amount), 'fee_amount' => Money::format($transfer->fee_amount), 'currency' => $transfer->currency,
                 'source_account_name' => $transfer->sourceAccount?->name ?? 'Account',
                 'destination_name' => $transfer->destinationAccount?->name ?? $transfer->recipient_name,
                 'bank_name' => $transfer->bank_name, 'description' => $transfer->description,
@@ -33,8 +34,18 @@ class TransferController extends Controller
 
         $accounts = Account::query()->where('user_id', $user->id)
             ->orderBy('name')->get(['id', 'name', 'account_number', 'balance', 'currency']);
+        $beneficiaries = Beneficiary::query()->where('user_id', $user->id)->orderBy('name')->get();
+        $usedToday = Transfer::query()->where('user_id', $user->id)->whereIn('status', ['pending', 'completed'])
+            ->whereDate('created_at', today())->sum('amount');
+        $dailyLimit = config('banking.daily_transfer_limit');
 
-        return Inertia::render('transfers/index', ['accounts' => $accounts, 'transfers' => $transfers]);
+        return Inertia::render('transfers/index', [
+            'accounts' => $accounts,
+            'transfers' => $transfers,
+            'beneficiaries' => $beneficiaries,
+            'dailyLimit' => Money::format($dailyLimit),
+            'dailyRemaining' => Money::format(max(0, (float) $dailyLimit - (float) $usedToday)),
+        ]);
     }
 
     public function store(StoreTransferRequest $request, TransferService $transferService): RedirectResponse
