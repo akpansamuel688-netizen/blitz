@@ -41,6 +41,10 @@ class TransferService
             $amountInCents = Money::toCents($data['amount']);
             $sourceBalanceInCents = Money::toCents($source->balance);
 
+            if ($amountInCents <= 0) {
+                throw ValidationException::withMessages(['amount' => 'The transfer amount must be greater than zero.']);
+            }
+
             if ($amountInCents > $sourceBalanceInCents) {
                 throw ValidationException::withMessages(['amount' => 'Insufficient funds for this transfer.']);
             }
