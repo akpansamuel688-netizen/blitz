@@ -11,6 +11,7 @@ use App\Http\Controllers\Banking\DashboardController;
 use App\Http\Controllers\Banking\RecurringTransferController;
 use App\Http\Controllers\Banking\SavingsGoalController;
 use App\Http\Controllers\Banking\TransactionController;
+use App\Http\Controllers\Banking\TransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -24,6 +25,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('accounts/{account}/transfer', [AccountController::class, 'transfer'])->name('accounts.transfer');
 
     Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
+
+    Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
+    Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
 
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('categories', [CategoryController::class, 'store'])->name('categories.store');

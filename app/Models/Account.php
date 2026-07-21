@@ -40,4 +40,14 @@ class Account extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    public function outgoingTransfers(): HasMany
+    {
+        return $this->hasMany(Transfer::class, 'source_account_id');
+    }
+
+    public function incomingTransfers(): HasMany
+    {
+        return $this->hasMany(Transfer::class, 'destination_account_id');
+    }
 }

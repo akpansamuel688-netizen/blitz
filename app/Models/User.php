@@ -81,6 +81,11 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(SavingsGoal::class);
     }
 
+    public function transfers(): HasMany
+    {
+        return $this->hasMany(Transfer::class);
+    }
+
     public function isAdmin(): bool
     {
         return (bool) $this->is_admin;

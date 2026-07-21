@@ -10,6 +10,7 @@ import {
     Shield,
     Tags,
     Target,
+    Send,
     Users,
     Wallet,
 } from 'lucide-react';
@@ -52,6 +53,11 @@ const bankingNavItems: NavItem[] = [
         title: 'Transactions',
         href: transactions.index(),
         icon: ListChecks,
+    },
+    {
+        title: 'Transfers',
+        href: '/transfers',
+        icon: Send,
     },
 ];
 

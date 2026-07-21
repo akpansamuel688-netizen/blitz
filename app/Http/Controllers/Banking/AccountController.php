@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Banking;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Services\Banking\TransferService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -100,7 +101,7 @@ class AccountController extends Controller
         ]);
     }
 
-    public function transfer(Request $request, Account $account): RedirectResponse
+    public function transfer(Request $request, Account $account, TransferService $transferService): RedirectResponse
     {
         if ($request->user()->id !== $account->user_id) {
             abort(403);
@@ -112,38 +113,10 @@ class AccountController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $destination = Account::where('id', $data['destination_account_id'])
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
-
-        if ($destination->id === $account->id) {
-            return back()->withErrors(['destination_account_id' => 'Choose a different account.']);
-        }
-
-        $amount = round((float) $data['amount'], 2);
-
-        if ($amount > $account->balance) {
-            return back()->withErrors(['amount' => 'Insufficient funds.']);
-        }
-
-        $account->balance -= $amount;
-        $account->save();
-
-        $destination->balance += $amount;
-        $destination->save();
-
-        Transaction::create([
-            'account_id' => $account->id,
-            'transaction_type' => 'Debit',
-            'amount' => $amount,
-            'description' => $data['description'] ?? 'Transfer to ' . $destination->name,
-        ]);
-
-        Transaction::create([
-            'account_id' => $destination->id,
-            'transaction_type' => 'Credit',
-            'amount' => $amount,
-            'description' => $data['description'] ?? 'Transfer from ' . $account->name,
+        $transferService->create($request->user(), [
+            ...$data,
+            'transfer_type' => 'internal',
+            'source_account_id' => $account->id,
         ]);
 
         Inertia::flash('toast', [
