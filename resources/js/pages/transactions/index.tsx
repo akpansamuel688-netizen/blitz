@@ -34,11 +34,11 @@ export default function Transactions({ transactions: transactionItems, filter }:
             <div className="space-y-6">
                 <Card className="border">
                     <CardHeader>
-                        <div className="flex items-center gap-2 text-primary">
+                        <div className={`flex items-center gap-2 ${filter === 'Debit' ? 'text-rose-600 dark:text-rose-400' : 'text-primary'}`}>
                             <ListChecks className="size-5" />
                             <CardTitle>{title}</CardTitle>
                         </div>
-                        <CardDescription>{description}</CardDescription>
+                        <CardDescription className={filter === 'Debit' ? 'text-rose-600/80 dark:text-rose-400/80' : undefined}>{description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {transactionItems.length === 0 ? (
