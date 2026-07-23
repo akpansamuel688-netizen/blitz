@@ -308,6 +308,95 @@ class AdminDashboardTest extends TestCase
         $this->assertDatabaseHas('transactions', ['account_id' => $account->id, 'amount' => '50.00']);
     }
 
+    public function test_admin_can_edit_transaction_date_time_amount_and_status_with_an_audit_record(): void
+    {
+        $admin = User::factory()->admin()->create(['name' => 'John Admin']);
+        $customer = User::factory()->create();
+        $account = Account::factory()->for($customer)->create(['balance' => 100]);
+        $transaction = Transaction::factory()->for($account)->create([
+            'transaction_type' => 'Credit',
+            'status' => 'completed',
+            'amount' => 100,
+            'created_at' => '2026-07-01 09:30:00',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.transactions.financial.update', $transaction), [
+                'date' => '2026-07-04',
+                'time' => '14:45',
+                'amount' => '150.00',
+                'status' => 'completed',
+                'reason' => 'Corrected the deposit amount.',
+            ])
+            ->assertRedirect(route('admin.transactions.show', $transaction));
+
+        $transaction->refresh();
+        $this->assertSame('150.00', (string) $transaction->amount);
+        $this->assertSame('completed', $transaction->status);
+        $this->assertSame('2026-07-04 14:45', $transaction->created_at->format('Y-m-d H:i'));
+        $this->assertSame('150.00', (string) $account->fresh()->balance);
+        $this->assertDatabaseHas('transaction_edit_audits', [
+            'transaction_id' => $transaction->id,
+            'admin_user_id' => $admin->id,
+            'reason' => 'Corrected the deposit amount.',
+        ]);
+    }
+
+    public function test_status_change_reconciles_balance_and_normal_users_cannot_edit_transactions(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create();
+        $account = Account::factory()->for($customer)->create(['balance' => 80]);
+        $transaction = Transaction::factory()->for($account)->create(['transaction_type' => 'Credit', 'status' => 'completed', 'amount' => 80]);
+
+        $this->actingAs($customer)
+            ->patch(route('admin.transactions.financial.update', $transaction), [
+                'date' => '2026-07-01', 'time' => '10:00', 'amount' => '80.00', 'status' => 'pending', 'reason' => 'Should be rejected.',
+            ])
+            ->assertRedirect(route('admin.login'));
+
+        $this->actingAs($admin)
+            ->patch(route('admin.transactions.financial.update', $transaction), [
+                'date' => '2026-07-01', 'time' => '10:00', 'amount' => '80.00', 'status' => 'pending', 'reason' => 'Deposit is awaiting settlement.',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('pending', $transaction->fresh()->status);
+        $this->assertSame('0.00', (string) $account->fresh()->balance);
+    }
+
+    public function test_invalid_financial_edit_rolls_back_and_customer_history_uses_updated_values(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create();
+        $account = Account::factory()->for($customer)->create(['balance' => 50]);
+        $transaction = Transaction::factory()->for($account)->create(['transaction_type' => 'Debit', 'status' => 'completed', 'amount' => 50]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.transactions.financial.update', $transaction), [
+                'date' => '2026-07-02', 'time' => '09:00', 'amount' => '200.00', 'status' => 'completed', 'reason' => 'This should not be applied.',
+            ])
+            ->assertSessionHasErrors('amount');
+
+        $this->assertSame('50.00', (string) $transaction->fresh()->amount);
+        $this->assertSame('50.00', (string) $account->fresh()->balance);
+        $this->assertDatabaseCount('transaction_edit_audits', 0);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.transactions.financial.update', $transaction), [
+                'date' => '2026-07-03', 'time' => '11:15', 'amount' => '40.00', 'status' => 'completed', 'reason' => 'Corrected debit amount.',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($customer)
+            ->get(route('transactions.show', $transaction))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('transaction.amount', '40.00')
+                ->where('transaction.status', 'completed')
+            );
+    }
+
     public function test_customer_cannot_list_admin_users(): void
     {
         $user = User::factory()->create();

@@ -6,6 +6,7 @@ import transactions from '@/routes/transactions';
 type Transaction = {
     id: number;
     transaction_type: string;
+    status: string;
     amount: string;
     description: string;
     created_at: string;
@@ -57,7 +58,7 @@ export default function Transactions({ transactions: transactionItems, filter }:
                                             <div>
                                                 <p className="font-medium">{transaction.description}</p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {transaction.transaction_type} · {transaction.account_name}
+                                                    {transaction.transaction_type} · {transaction.account_name} · <span className="capitalize">{transaction.status}</span>
                                                 </p>
                                             </div>
                                             <p className={`text-right text-sm font-semibold ${filter === 'Debit' ? 'text-rose-600 dark:text-rose-400' : ''}`}>
