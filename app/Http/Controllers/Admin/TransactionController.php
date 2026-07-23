@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Support\Money;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -30,9 +31,11 @@ class TransactionController extends Controller
     public function index(): Response
     {
         return Inertia::render('admin/transactions', [
-            'accounts' => Account::query()->with('user:id,name')->orderBy('name')->get()->map(fn (Account $account) => [
-                'id' => $account->id, 'name' => $account->name, 'balance' => Money::format($account->balance),
-                'currency' => $account->currency, 'user_name' => $account->user?->name ?? 'User',
+            'customers' => User::query()->where('is_admin', false)->has('accounts')->withCount('accounts')->orderBy('name')->get()->map(fn (User $user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'accounts_count' => $user->accounts_count,
             ]),
             'transactions' => Transaction::query()->with('account:id,name,user_id')->latest()->limit(100)->get()->map(fn (Transaction $transaction) => [
                 'id' => $transaction->id, 'type' => $transaction->transaction_type, 'amount' => Money::format($transaction->amount),
@@ -53,7 +56,8 @@ class TransactionController extends Controller
     public function generate(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'account_id' => ['required', 'exists:accounts,id'],
+            'user_ids' => ['required', 'array', 'min:1', 'max:100'],
+            'user_ids.*' => ['integer', 'exists:users,id'],
             'transaction_type' => ['required', 'in:Credit,Debit'],
             'count' => ['required', 'integer', 'min:1', 'max:100'],
             'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
@@ -62,12 +66,16 @@ class TransactionController extends Controller
         ]);
 
         DB::transaction(function () use ($data): void {
-            $account = Account::query()->lockForUpdate()->findOrFail($data['account_id']);
+            $accounts = Account::query()->whereIn('user_id', $data['user_ids'])->orderBy('id')->lockForUpdate()->get();
+
+            if ($accounts->isEmpty()) {
+                throw ValidationException::withMessages(['user_ids' => 'Select at least one customer with an account.']);
+            }
+
             $amount = Money::toCents($data['amount']);
             $total = $amount * $data['count'];
-            $balance = Money::toCents($account->balance);
 
-            if ($data['transaction_type'] === 'Debit' && $total > $balance) {
+            if ($data['transaction_type'] === 'Debit' && $accounts->contains(fn (Account $account) => $total > Money::toCents($account->balance))) {
                 throw ValidationException::withMessages(['amount' => 'The generated debits exceed the account balance.']);
             }
 
@@ -75,20 +83,27 @@ class TransactionController extends Controller
             $end = Carbon::parse($data['end_date'])->endOfDay();
             $seconds = $start->diffInSeconds($end);
 
-            for ($index = 0; $index < $data['count']; $index++) {
-                $slotStart = intdiv($seconds * $index, $data['count']);
-                $slotEnd = intdiv($seconds * ($index + 1), $data['count']);
-                $at = $start->copy()->addSeconds(random_int($slotStart, max($slotStart, $slotEnd - 1)));
-                $transaction = new Transaction([
-                    'account_id' => $account->id,
-                    'transaction_type' => $data['transaction_type'],
-                    'amount' => Money::fromCents($amount),
-                    'description' => self::GENERATED_PAYMENT_DESCRIPTIONS[$index % count(self::GENERATED_PAYMENT_DESCRIPTIONS)],
-                ]);
-                $transaction->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
-            }
+            $descriptionIndex = 0;
 
-            $account->update(['balance' => Money::fromCents($data['transaction_type'] === 'Credit' ? $balance + $total : $balance - $total)]);
+            foreach ($accounts as $account) {
+                $balance = Money::toCents($account->balance);
+
+                for ($index = 0; $index < $data['count']; $index++) {
+                    $slotStart = intdiv($seconds * $index, $data['count']);
+                    $slotEnd = intdiv($seconds * ($index + 1), $data['count']);
+                    $at = $start->copy()->addSeconds(random_int($slotStart, max($slotStart, $slotEnd - 1)));
+                    $transaction = new Transaction([
+                        'account_id' => $account->id,
+                        'transaction_type' => $data['transaction_type'],
+                        'amount' => Money::fromCents($amount),
+                        'description' => self::GENERATED_PAYMENT_DESCRIPTIONS[$descriptionIndex % count(self::GENERATED_PAYMENT_DESCRIPTIONS)],
+                    ]);
+                    $transaction->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
+                    $descriptionIndex++;
+                }
+
+                $account->update(['balance' => Money::fromCents($data['transaction_type'] === 'Credit' ? $balance + $total : $balance - $total)]);
+            }
         });
 
         return back();

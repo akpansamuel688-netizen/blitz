@@ -200,7 +200,7 @@ class AdminDashboardTest extends TestCase
 
         $this->actingAs($admin)
             ->post(route('admin.transactions.generate'), [
-                'account_id' => $account->id,
+                'user_ids' => [$account->user_id],
                 'transaction_type' => 'Credit',
                 'count' => 3,
                 'amount' => '25.50',
@@ -226,6 +226,28 @@ class AdminDashboardTest extends TestCase
         }
 
         $this->assertSame('576.50', (string) $account->fresh()->balance);
+    }
+
+    public function test_admin_can_generate_transactions_for_multiple_customers(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $firstAccount = Account::factory()->create(['balance' => 500]);
+        $secondAccount = Account::factory()->create(['balance' => 200]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.transactions.generate'), [
+                'user_ids' => [$firstAccount->user_id, $secondAccount->user_id],
+                'transaction_type' => 'Credit',
+                'count' => 2,
+                'amount' => '20.00',
+                'start_date' => '2026-07-01',
+                'end_date' => '2026-07-02',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseCount('transactions', 4);
+        $this->assertSame('540.00', (string) $firstAccount->fresh()->balance);
+        $this->assertSame('240.00', (string) $secondAccount->fresh()->balance);
     }
 
     public function test_customer_cannot_list_admin_users(): void
