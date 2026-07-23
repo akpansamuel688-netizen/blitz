@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Actions\Fortify\CreateNewUser;
 /* @end-chisel-registration */
 use App\Actions\Fortify\ResetUserPassword;
+use App\Actions\Fortify\RequireLoginOtp;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -16,6 +17,7 @@ use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -46,6 +48,7 @@ class FortifyServiceProvider extends ServiceProvider
         /* @chisel-registration */
         Fortify::createUsersUsing(CreateNewUser::class);
         /* @end-chisel-registration */
+        Fortify::authenticateThrough(fn () => [RedirectIfTwoFactorAuthenticatable::class, RequireLoginOtp::class]);
     }
 
     /**
@@ -105,6 +108,8 @@ class FortifyServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($throttleKey);
         });
+
+        RateLimiter::for('otp-resend', fn (Request $request) => Limit::perMinute(3)->by($request->session()->getId().'|'.$request->ip()));
 
         /* @chisel-passkeys */
         RateLimiter::for('passkeys', function (Request $request) {

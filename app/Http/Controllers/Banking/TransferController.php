@@ -8,6 +8,7 @@ use App\Models\Account;
 use App\Models\Beneficiary;
 use App\Models\Transfer;
 use App\Services\Banking\TransferService;
+use App\Services\Security\TransferAuthorizationService;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,13 +43,15 @@ class TransferController extends Controller
         ]);
     }
 
-    public function store(StoreTransferRequest $request, TransferService $transferService): RedirectResponse
+    public function store(StoreTransferRequest $request, TransferAuthorizationService $authorizations): RedirectResponse
     {
-        $transferService->create($request->user(), $request->validated());
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Transfer completed successfully.']);
-
-        return back();
+        $data = $request->validated();
+        $data['source_account_number'] = Account::query()->where('user_id', $request->user()->id)->findOrFail($data['source_account_id'])->account_number;
+        if (! empty($data['destination_account_id'])) $data['destination_account_number'] = Account::query()->where('user_id', $request->user()->id)->findOrFail($data['destination_account_id'])->account_number;
+        $authorization = $authorizations->start($request->user(), $data, $request);
+        $verification = $authorization->otpVerifications()->latest('id')->firstOrFail();
+        $request->session()->put(['otp_transaction_authorization_id' => $authorization->id, 'otp_transaction_verification_id' => $verification->id]);
+        return redirect()->route('security.transaction.show');
     }
 
     public function update(Request $request, Transfer $transfer): RedirectResponse

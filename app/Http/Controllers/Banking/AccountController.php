@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Banking;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
-use App\Services\Banking\TransferService;
+use App\Services\Security\TransferAuthorizationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -100,29 +101,28 @@ class AccountController extends Controller
         ]);
     }
 
-    public function transfer(Request $request, Account $account, TransferService $transferService): RedirectResponse
+    public function transfer(Request $request, Account $account, TransferAuthorizationService $authorizations): RedirectResponse
     {
         if ($request->user()->id !== $account->user_id) {
             abort(403);
         }
 
         $data = $request->validate([
-            'destination_account_id' => ['required', 'exists:accounts,id'],
+            'destination_account_id' => ['required', Rule::exists('accounts', 'id')->where('user_id', $request->user()->id)],
             'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/', 'not_in:0,0.0,0.00'],
             'description' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $transferService->create($request->user(), [
+        $payload = [
             ...$data,
             'transfer_type' => 'internal',
             'source_account_id' => $account->id,
-        ]);
-
-        Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => 'Transfer completed successfully.',
-        ]);
-
-        return back();
+            'source_account_number' => $account->account_number,
+            'destination_account_number' => Account::query()->where('user_id', $request->user()->id)->findOrFail($data['destination_account_id'])->account_number,
+        ];
+        $authorization = $authorizations->start($request->user(), $payload, $request);
+        $verification = $authorization->otpVerifications()->latest('id')->firstOrFail();
+        $request->session()->put(['otp_transaction_authorization_id' => $authorization->id, 'otp_transaction_verification_id' => $verification->id]);
+        return redirect()->route('security.transaction.show');
     }
 }

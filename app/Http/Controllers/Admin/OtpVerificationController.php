@@ -1,0 +1,10 @@
+<?php
+namespace App\Http\Controllers\Admin;
+use App\Http\Controllers\Controller;
+use App\Models\OtpVerification;
+use App\Services\Security\OtpService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+class OtpVerificationController extends Controller { public function index(Request $request): Response { $records = OtpVerification::query()->with(['user:id,name,email','authorization:id,transfer_id,status'])->latest()->paginate(50)->through(fn (OtpVerification $otp) => ['id' => $otp->id, 'customer' => $otp->user?->name, 'customer_id' => $otp->user_id, 'email' => $this->mask($otp->user?->email), 'purpose' => $otp->purpose, 'status' => $otp->status, 'requested_at' => $otp->created_at?->toIso8601String(), 'expires_at' => $otp->expires_at?->toIso8601String(), 'verified_at' => $otp->verified_at?->toIso8601String(), 'attempt_count' => $otp->attempt_count, 'maximum_attempts' => $otp->maximum_attempts, 'transfer_id' => $otp->authorization?->transfer_id]); return Inertia::render('admin/otp-verifications/index', ['records' => $records]); } public function invalidate(OtpVerification $verification, OtpService $otp): RedirectResponse { $otp->invalidate($verification); return back()->with('success', 'Verification code invalidated.'); } public function resend(Request $request, OtpVerification $verification, OtpService $otp): RedirectResponse { if ($verification->status !== 'pending') return back()->withErrors(['otp' => 'Only an active verification can be resent.']); $context = $verification->authorization ? app(\App\Services\Security\TransferAuthorizationService::class)->mailContext($verification->authorization->payload) : []; $otp->resend($verification, $context, $request); return back()->with('success', 'A replacement verification code was sent.'); } private function mask(?string $email): string { if (! $email) return '—'; [$name,$domain] = array_pad(explode('@',$email,2),2,''); return substr($name,0,2).str_repeat('*',max(3,strlen($name)-2)).'@'.$domain; } }

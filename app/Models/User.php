@@ -105,6 +105,16 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(DebitCard::class);
     }
 
+    public function otpVerifications(): HasMany
+    {
+        return $this->hasMany(OtpVerification::class);
+    }
+
+    public function transactionAuthorizations(): HasMany
+    {
+        return $this->hasMany(TransactionAuthorization::class);
+    }
+
     public function isAdmin(): bool
     {
         return (bool) $this->is_admin;

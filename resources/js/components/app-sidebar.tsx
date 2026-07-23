@@ -112,6 +112,11 @@ const adminNavItems: NavItem[] = [
         href: '/admin/transactions',
         icon: ListChecks,
     },
+    {
+        title: 'Security verification',
+        href: '/admin/otp-verifications',
+        icon: Shield,
+    },
 ];
 
 const footerNavItems: NavItem[] = [

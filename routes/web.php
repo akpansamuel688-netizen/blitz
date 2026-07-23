@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DebitCardController as AdminDebitCardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\TransferController as AdminTransferController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
+use App\Http\Controllers\Admin\OtpVerificationController as AdminOtpVerificationController;
 use App\Http\Controllers\Banking\AccountController;
 use App\Http\Controllers\Banking\BillController;
 use App\Http\Controllers\Banking\BeneficiaryController;
@@ -18,9 +19,15 @@ use App\Http\Controllers\Banking\RecurringTransferController;
 use App\Http\Controllers\Banking\SavingsGoalController;
 use App\Http\Controllers\Banking\TransactionController;
 use App\Http\Controllers\Banking\TransferController;
+use App\Http\Controllers\Security\LoginOtpController;
+use App\Http\Controllers\Security\TransactionOtpController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+Route::get('security/login-verification', [LoginOtpController::class, 'show'])->middleware('guest')->name('security.login.show');
+Route::post('security/login-verification', [LoginOtpController::class, 'verify'])->middleware('guest')->name('security.login.verify');
+Route::post('security/login-verification/resend', [LoginOtpController::class, 'resend'])->middleware(['guest', 'throttle:otp-resend'])->name('security.login.resend');
 
 Route::get('admin/login', [AuthenticatedAdminController::class, 'create'])->name('admin.login');
 Route::post('admin/login', [AuthenticatedAdminController::class, 'store'])->name('admin.login.store');
@@ -63,6 +70,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('savings-goals', [SavingsGoalController::class, 'index'])->name('savings-goals.index');
     Route::post('savings-goals', [SavingsGoalController::class, 'store'])->name('savings-goals.store');
 
+    Route::get('security/transaction-verification', [TransactionOtpController::class, 'show'])->name('security.transaction.show');
+    Route::post('security/transaction-verification', [TransactionOtpController::class, 'verify'])->name('security.transaction.verify');
+    Route::post('security/transaction-verification/resend', [TransactionOtpController::class, 'resend'])->middleware('throttle:otp-resend')->name('security.transaction.resend');
+
 });
 
 Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
@@ -87,6 +98,9 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::delete('/transactions/{transaction}', [AdminTransactionController::class, 'destroy'])->name('transactions.destroy');
     Route::patch('/transactions/{transaction}/financial', [AdminTransactionController::class, 'updateFinancial'])->name('transactions.financial.update');
     Route::post('/transactions/generate', [AdminTransactionController::class, 'generate'])->name('transactions.generate');
+    Route::get('/otp-verifications', [AdminOtpVerificationController::class, 'index'])->name('otp-verifications.index');
+    Route::post('/otp-verifications/{verification}/invalidate', [AdminOtpVerificationController::class, 'invalidate'])->name('otp-verifications.invalidate');
+    Route::post('/otp-verifications/{verification}/resend', [AdminOtpVerificationController::class, 'resend'])->name('otp-verifications.resend');
 });
 
 require __DIR__.'/settings.php';

@@ -1,0 +1,12 @@
+<?php
+namespace App\Http\Controllers\Security;
+use App\Http\Controllers\Controller;
+use App\Models\OtpVerification;
+use App\Services\Security\OtpService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
+class LoginOtpController extends Controller { public function show(Request $request): Response|RedirectResponse { $verification = $this->verification($request); if (! $verification) return redirect()->route('login'); return Inertia::render('auth/otp-verification', $this->props($verification, 'login')); } public function verify(Request $request, OtpService $otp): RedirectResponse { $request->validate(['code' => ['required', 'digits:6']]); $verification = $this->verification($request); if (! $verification || ! $otp->verify($verification, $request->string('code')->toString())) throw ValidationException::withMessages(['code' => ['The verification code is invalid, expired, or has already been used.']]); $state = $request->session()->pull('otp_login'); Auth::loginUsingId($state['user_id'], (bool) $state['remember']); $request->session()->regenerate(); return redirect()->intended('/dashboard'); } public function resend(Request $request, OtpService $otp): RedirectResponse { $verification = $this->verification($request); if (! $verification) return redirect()->route('login'); $replacement = $otp->resend($verification, [], $request); $state = $request->session()->get('otp_login'); $state['verification_id'] = $replacement->id; $request->session()->put('otp_login', $state); return back()->with('status', 'A new verification code has been sent.'); } private function verification(Request $request): ?OtpVerification { $state = $request->session()->get('otp_login'); if (! $state) return null; return OtpVerification::query()->whereKey($state['verification_id'])->where('user_id', $state['user_id'])->where('purpose', OtpVerification::LOGIN)->first(); } private function props(OtpVerification $verification, string $flow): array { $email = $verification->user->email; [$name, $domain] = array_pad(explode('@', $email, 2), 2, ''); return ['flow' => $flow, 'maskedEmail' => substr($name, 0, 2).str_repeat('*', max(3, strlen($name) - 2)).'@'.$domain, 'expiresAt' => $verification->expires_at->toIso8601String(), 'attemptsRemaining' => max(0, $verification->maximum_attempts - $verification->attempt_count)]; } }
