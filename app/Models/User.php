@@ -112,6 +112,6 @@ class User extends Authenticatable implements PasskeyUser
 
     protected function avatar(): Attribute
     {
-        return Attribute::get(fn () => $this->profile_photo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->profile_photo_path) : null);
+        return Attribute::get(fn () => $this->profile_photo_path ? '/storage/'.$this->profile_photo_path : null);
     }
 }

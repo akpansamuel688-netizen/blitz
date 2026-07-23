@@ -54,6 +54,7 @@ export default function Profile(
                     options={{
                         preserveScroll: true,
                     }}
+                    encType="multipart/form-data"
                     className="space-y-6"
                 >
                     {({ processing, errors }) => (
