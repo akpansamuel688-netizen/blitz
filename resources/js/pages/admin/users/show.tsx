@@ -1,8 +1,9 @@
-import { Head, Link } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowDownLeft, ArrowLeft, ArrowUpRight, Shield, Wallet } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import type { DashboardTransaction } from '@/lib/dashboard';
 import { formatCurrency, formatDateTime, maskAccountNumber } from '@/lib/money';
 import { cn } from '@/lib/utils';
@@ -88,6 +89,27 @@ export default function AdminUserShow({ user, accounts, transactions }: Props) {
                     </Card>
                 </div>
 
+                {!user.is_admin && (
+                    <Card className="border shadow-sm">
+                        <CardHeader>
+                            <CardTitle>Edit test user</CardTitle>
+                            <CardDescription>Update the customer name and manage balances on their accounts below.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Form action={`/admin/users/${user.id}`} method="patch" className="flex max-w-xl flex-col gap-3 sm:flex-row sm:items-end">
+                                {({ processing, errors }) => <>
+                                    <div className="grid flex-1 gap-2">
+                                        <label htmlFor="name" className="text-sm font-medium">Name</label>
+                                        <Input id="name" name="name" defaultValue={user.name} required />
+                                        <p className="text-xs text-destructive">{errors.name}</p>
+                                    </div>
+                                    <Button disabled={processing}>Save name</Button>
+                                </>}
+                            </Form>
+                        </CardContent>
+                    </Card>
+                )}
+
                 <Card className="border shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -115,9 +137,22 @@ export default function AdminUserShow({ user, accounts, transactions }: Props) {
                                             {formatDateTime(item.created_at)}
                                         </p>
                                     </div>
-                                    <p className="text-lg font-semibold tabular-nums">
-                                        {formatCurrency(item.balance, item.currency)}
-                                    </p>
+                                    {user.is_admin ? (
+                                        <p className="text-lg font-semibold tabular-nums">
+                                            {formatCurrency(item.balance, item.currency)}
+                                        </p>
+                                    ) : (
+                                        <Form action={`/admin/users/${user.id}/accounts/${item.id}/balance`} method="patch" className="flex items-end gap-2">
+                                            {({ processing, errors }) => <>
+                                                <div className="grid gap-1">
+                                                    <label htmlFor={`balance-${item.id}`} className="text-xs text-muted-foreground">Balance ({item.currency})</label>
+                                                    <Input id={`balance-${item.id}`} name="balance" type="number" step="0.01" min="0" defaultValue={item.balance} className="w-36" required />
+                                                    <p className="text-xs text-destructive">{errors.balance}</p>
+                                                </div>
+                                                <Button size="sm" variant="outline" disabled={processing}>Save balance</Button>
+                                            </>}
+                                        </Form>
+                                    )}
                                 </div>
                             ))
                         )}

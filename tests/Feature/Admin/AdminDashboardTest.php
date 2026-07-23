@@ -106,6 +106,30 @@ class AdminDashboardTest extends TestCase
         $this->assertDatabaseCount('users', 4);
         $this->assertDatabaseHas('users', ['name' => 'QA User 1', 'email' => 'qa-user-1@example.test', 'is_admin' => false]);
         $this->assertDatabaseHas('users', ['name' => 'QA User 3', 'email' => 'qa-user-3@example.test', 'is_admin' => false]);
+        $this->assertDatabaseCount('accounts', 3);
+    }
+
+    public function test_admin_can_edit_a_test_user_name_and_account_balance(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $testUser = User::factory()->create(['name' => 'Before Name', 'is_admin' => false]);
+        $account = Account::factory()->for($testUser)->create(['balance' => 100]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.update', $testUser), ['name' => 'After Name'])
+            ->assertRedirect();
+
+        $this->patch(route('admin.users.accounts.balance.update', [$testUser, $account]), ['balance' => '250.25'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('users', ['id' => $testUser->id, 'name' => 'After Name']);
+        $this->assertDatabaseHas('accounts', ['id' => $account->id, 'balance' => '250.25']);
+        $this->assertDatabaseHas('transactions', [
+            'account_id' => $account->id,
+            'transaction_type' => 'Credit',
+            'amount' => '150.25',
+            'description' => 'Admin balance adjustment',
+        ]);
     }
 
     public function test_admin_can_delete_a_test_user_but_not_an_administrator(): void

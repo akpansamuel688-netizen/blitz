@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
@@ -46,10 +48,59 @@ class UserController extends Controller
                     'password' => $data['password'],
                 ]);
                 $user->forceFill(['email_verified_at' => now(), 'is_admin' => false])->save();
+                Account::query()->create([
+                    'user_id' => $user->id,
+                    'name' => 'Everyday Checking',
+                    'account_number' => str_pad((string) $user->id, 12, '0', STR_PAD_LEFT),
+                    'type' => 'Checking',
+                    'currency' => 'USD',
+                    'balance' => 0,
+                ]);
             });
         });
 
         return to_route('admin.users.index')->with('success', "Created {$data['count']} test user(s).");
+    }
+
+    public function update(Request $request, User $user): RedirectResponse
+    {
+        if ($user->isAdmin()) {
+            return back()->with('error', 'Administrator profiles cannot be changed from the customer directory.');
+        }
+
+        $data = $request->validate(['name' => ['required', 'string', 'max:100']]);
+        $user->update($data);
+
+        return back()->with('success', 'Test user updated.');
+    }
+
+    public function updateAccountBalance(Request $request, User $user, Account $account): RedirectResponse
+    {
+        if ($user->isAdmin() || $account->user_id !== $user->id) {
+            abort(404);
+        }
+
+        $data = $request->validate(['balance' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/']]);
+
+        DB::transaction(function () use ($account, $data): void {
+            $account = Account::query()->lockForUpdate()->findOrFail($account->id);
+            $currentBalance = Money::toCents($account->balance);
+            $newBalance = Money::toCents($data['balance']);
+
+            if ($currentBalance === $newBalance) {
+                return;
+            }
+
+            $account->update(['balance' => Money::fromCents($newBalance)]);
+            Transaction::query()->create([
+                'account_id' => $account->id,
+                'transaction_type' => $newBalance > $currentBalance ? 'Credit' : 'Debit',
+                'amount' => Money::fromCents(abs($newBalance - $currentBalance)),
+                'description' => 'Admin balance adjustment',
+            ]);
+        });
+
+        return back()->with('success', 'Account balance updated.');
     }
 
     public function destroy(User $user): RedirectResponse
