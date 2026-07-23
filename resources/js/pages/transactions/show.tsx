@@ -1,0 +1,16 @@
+import { Head, Link } from '@inertiajs/react';
+import { ArrowLeft, CheckCircle2, ReceiptText } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatCurrency } from '@/lib/money';
+import transactions from '@/routes/transactions';
+
+type Transaction = { id: number; transaction_type: string; description: string | null; amount: string; created_at: string | null; account_name: string | null; currency: string };
+type Transfer = { id: number; type: string; status: string; amount: string; fee_amount: string; destination_name: string | null; bank_name: string | null; reference: string | null };
+
+export default function TransactionShow({ transaction, transfer }: { transaction: Transaction; transfer: Transfer | null }) {
+    return <><Head title="Transaction review" /><div className="space-y-6"><Button variant="ghost" size="sm" asChild><Link href={transactions.index()}><ArrowLeft className="size-4" /> Back to transactions</Link></Button><Card className="border shadow-sm"><CardHeader><CardTitle className="flex items-center gap-2"><ReceiptText className="size-5 text-brand" /> Transaction review</CardTitle><CardDescription>{transaction.created_at && new Date(transaction.created_at).toLocaleString()}</CardDescription></CardHeader><CardContent className="grid gap-5"><div className="flex items-start justify-between gap-4"><div><p className="text-sm text-muted-foreground">{transaction.transaction_type} · {transaction.account_name}</p><p className="mt-1 text-lg font-medium">{transaction.description ?? 'Transaction'}</p></div><p className="text-xl font-semibold">{formatCurrency(transaction.amount, transaction.currency)}</p></div>{transfer ? <div className="grid gap-4 rounded-2xl border bg-muted/30 p-4 sm:grid-cols-2"><div><p className="text-sm text-muted-foreground">Transfer type</p><p className="mt-1 capitalize">{transfer.type}</p></div><div><p className="text-sm text-muted-foreground">Status</p><Badge className="mt-1 capitalize"><CheckCircle2 className="size-3" />{transfer.status}</Badge></div><div><p className="text-sm text-muted-foreground">Transfer amount</p><p className="mt-1">{formatCurrency(transfer.amount, transaction.currency)}</p></div><div><p className="text-sm text-muted-foreground">Mandatory fee (0.8%)</p><p className="mt-1">{formatCurrency(transfer.fee_amount, transaction.currency)}</p></div><div><p className="text-sm text-muted-foreground">Recipient</p><p className="mt-1">{transfer.destination_name ?? 'Recipient'}</p></div>{transfer.bank_name && <div><p className="text-sm text-muted-foreground">Bank</p><p className="mt-1">{transfer.bank_name}</p></div>}{transfer.reference && <div className="sm:col-span-2"><p className="text-sm text-muted-foreground">Reference</p><p className="mt-1">{transfer.reference}</p></div>}</div> : <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">This transaction is not associated with a money transfer.</p>}</CardContent></Card></div></>;
+}
+
+TransactionShow.layout = { breadcrumbs: [{ title: 'Transactions', href: transactions.index() }, { title: 'Review', href: '#' }] };

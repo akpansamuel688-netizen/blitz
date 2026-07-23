@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Clock3, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import transactions from '@/routes/transactions';
@@ -45,9 +45,10 @@ export default function Transactions({ transactions: transactionItems }: Props) 
                         ) : (
                             <div className="grid gap-4">
                                 {transactionItems.map((transaction) => (
-                                    <div
+                                    <Link
                                         key={transaction.id}
-                                        className="rounded-3xl border border-border bg-background p-4 shadow-sm"
+                                        href={`/transactions/${transaction.id}`}
+                                        className="rounded-3xl border border-border bg-background p-4 shadow-sm transition-colors hover:border-primary/60 hover:bg-muted/30"
                                     >
                                         <div className="flex items-start justify-between gap-4">
                                             <div>
@@ -64,7 +65,7 @@ export default function Transactions({ transactions: transactionItems }: Props) 
                                             <Clock3 className="size-4" />
                                             {new Date(transaction.created_at).toLocaleString()}
                                         </p>
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
                         )}

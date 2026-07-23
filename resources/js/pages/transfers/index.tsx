@@ -42,7 +42,8 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
         const form = document.getElementById('transfer-form') as HTMLFormElement | null;
         if (!form?.reportValidity()) return;
         const data = new FormData(form);
-        setPendingReceipt({ type: String(data.get('transfer_type')), amount: String(data.get('amount')), fee: String(data.get('fee_amount') || '0') });
+        const amount = Number(data.get('amount'));
+        setPendingReceipt({ type: String(data.get('transfer_type')), amount: String(data.get('amount')), fee: (Math.round(amount * 0.8) / 100).toFixed(2) });
         setConfirmation(true);
     };
 
@@ -70,7 +71,7 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
                             {transferType === 'wire' && <><Field name="recipient_name" label="Recipient name" error={errors.recipient_name} required={false} /><Field name="wire_bank_name" label="Recipient bank" error={errors.wire_bank_name} required={false} /><Field name="swift_bic" label="SWIFT / BIC" error={errors.swift_bic} placeholder="DEUTDEFF" required={false} /><Field name="iban" label="IBAN" error={errors.iban} placeholder="DE89370400440532013000" required={false} /></>}
                             <Field name="description" label="Reference / description" error={errors.description} placeholder="Optional reference" className="sm:col-span-2" required={false} />
                             {transferType !== 'internal' && <label className="flex items-center gap-2 text-sm sm:col-span-2"><input name="save_beneficiary" type="checkbox" value="1" /> Save this recipient for future transfers</label>}
-                            <Field name="fee_amount" label="Optional transfer fee" error={errors.fee_amount} type="number" defaultValue="0" required={false} />
+                            <div className="grid gap-2"><Label>Transfer fee</Label><div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">0.8% of transfer amount</div><p className="text-xs text-muted-foreground">Calculated automatically and included in the total debit.</p></div>
                             <div className="flex items-end"><Button type="button" className="w-full" disabled={processing || accounts.length === 0} onClick={review}><ShieldCheck className="size-4" /> Review transfer</Button></div>
                         </>}
                     </Form>

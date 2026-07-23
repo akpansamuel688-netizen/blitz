@@ -24,7 +24,6 @@ class StoreTransferRequest extends FormRequest
             'source_account_id' => ['required', $ownedAccount],
             'destination_account_id' => [Rule::requiredIf($this->input('transfer_type') === 'internal'), 'nullable', $ownedAccount, 'different:source_account_id'],
             'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/', 'not_in:0,0.0,0.00'],
-            'fee_amount' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
             'beneficiary_id' => ['nullable', $ownedBeneficiary],
             'save_beneficiary' => ['nullable', 'boolean'],
             'description' => ['nullable', 'string', 'max:255'],

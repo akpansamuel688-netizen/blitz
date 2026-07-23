@@ -26,6 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('accounts/{account}/transfer', [AccountController::class, 'transfer'])->name('accounts.transfer');
 
     Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
+    Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
 
     Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
     Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');

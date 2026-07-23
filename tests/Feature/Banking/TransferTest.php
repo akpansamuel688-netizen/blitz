@@ -25,9 +25,9 @@ class TransferTest extends TestCase
             'description' => 'Monthly savings',
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('accounts', ['id' => $source->id, 'balance' => '74.50']);
+        $this->assertDatabaseHas('accounts', ['id' => $source->id, 'balance' => '74.30']);
         $this->assertDatabaseHas('accounts', ['id' => $destination->id, 'balance' => '45.50']);
-        $this->assertDatabaseHas('transfers', ['user_id' => $user->id, 'transfer_type' => 'internal', 'status' => 'completed']);
+        $this->assertDatabaseHas('transfers', ['user_id' => $user->id, 'transfer_type' => 'internal', 'status' => 'completed', 'fee_amount' => '0.20']);
         $this->assertDatabaseCount('transactions', 2);
     }
 
@@ -47,9 +47,9 @@ class TransferTest extends TestCase
             'swift_bic' => 'DEUTDEFF', 'iban' => 'DE89370400440532013000',
         ])->assertRedirect();
 
-        $this->assertDatabaseHas('accounts', ['id' => $source->id, 'balance' => '650.00']);
-        $this->assertDatabaseHas('transfers', ['transfer_type' => 'domestic', 'bank_name' => 'Example Bank', 'status' => 'completed']);
-        $this->assertDatabaseHas('transfers', ['transfer_type' => 'wire', 'swift_bic' => 'DEUTDEFF', 'status' => 'completed']);
+        $this->assertDatabaseHas('accounts', ['id' => $source->id, 'balance' => '647.20']);
+        $this->assertDatabaseHas('transfers', ['transfer_type' => 'domestic', 'bank_name' => 'Example Bank', 'status' => 'completed', 'fee_amount' => '1.20']);
+        $this->assertDatabaseHas('transfers', ['transfer_type' => 'wire', 'swift_bic' => 'DEUTDEFF', 'status' => 'completed', 'fee_amount' => '1.60']);
         $this->assertDatabaseCount('transactions', 2);
     }
 

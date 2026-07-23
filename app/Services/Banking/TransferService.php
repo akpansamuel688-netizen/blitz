@@ -42,7 +42,7 @@ class TransferService
             }
 
             $amountInCents = Money::toCents($data['amount']);
-            $feeInCents = Money::toCents($data['fee_amount'] ?? '0');
+            $feeInCents = intdiv(($amountInCents * 8) + 500, 1000);
             $sourceBalanceInCents = Money::toCents($source->balance);
 
             if ($amountInCents <= 0) {
