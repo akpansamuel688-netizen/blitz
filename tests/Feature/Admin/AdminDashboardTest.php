@@ -107,6 +107,32 @@ class AdminDashboardTest extends TestCase
             );
     }
 
+    public function test_admin_generates_described_credit_transactions(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $account = Account::factory()->create(['balance' => 500]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.transactions.generate'), [
+                'account_id' => $account->id,
+                'transaction_type' => 'Credit',
+                'count' => 3,
+                'amount' => '25.50',
+                'start_date' => '2026-07-01',
+                'end_date' => '2026-07-03',
+                'description' => 'Monthly account funding',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseCount('transactions', 3);
+        $this->assertDatabaseHas('transactions', [
+            'account_id' => $account->id,
+            'transaction_type' => 'Credit',
+            'description' => 'Monthly account funding',
+        ]);
+        $this->assertSame('576.50', (string) $account->fresh()->balance);
+    }
+
     public function test_customer_cannot_list_admin_users(): void
     {
         $user = User::factory()->create();

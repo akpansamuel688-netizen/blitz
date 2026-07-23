@@ -48,7 +48,7 @@ class TransactionController extends Controller
             'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'description' => ['nullable', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:255'],
         ]);
 
         DB::transaction(function () use ($data): void {
@@ -71,7 +71,7 @@ class TransactionController extends Controller
                     'account_id' => $account->id,
                     'transaction_type' => $data['transaction_type'],
                     'amount' => Money::fromCents($amount),
-                    'description' => $data['description'] ?: 'Admin-generated '.$data['transaction_type'].' #'.($index + 1),
+                    'description' => $data['description'],
                     'created_at' => $at,
                     'updated_at' => $at,
                 ]);
