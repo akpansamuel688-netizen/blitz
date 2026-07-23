@@ -14,6 +14,7 @@ type Transaction = {
 
 type Props = {
     transactions: Transaction[];
+    filter?: 'Credit' | 'Debit' | null;
 };
 
 function formatCurrency(value: string) {
@@ -23,19 +24,21 @@ function formatCurrency(value: string) {
     }).format(Number(value));
 }
 
-export default function Transactions({ transactions: transactionItems }: Props) {
+export default function Transactions({ transactions: transactionItems, filter }: Props) {
+    const title = filter === 'Credit' ? 'Money in' : filter === 'Debit' ? 'Money out' : 'Transactions';
+    const description = filter === 'Credit' ? 'All credits into your accounts.' : filter === 'Debit' ? 'All debits from your accounts.' : 'All activity across your accounts.';
     return (
         <>
-            <Head title="Transactions" />
+            <Head title={title} />
 
             <div className="space-y-6">
                 <Card className="border">
                     <CardHeader>
                         <div className="flex items-center gap-2 text-primary">
                             <ListChecks className="size-5" />
-                            <CardTitle>Transactions</CardTitle>
+                            <CardTitle>{title}</CardTitle>
                         </div>
-                        <CardDescription>All activity across your accounts.</CardDescription>
+                        <CardDescription>{description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {transactionItems.length === 0 ? (

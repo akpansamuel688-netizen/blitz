@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Banking;
 
 use App\Http\Controllers\Controller;
-use App\Models\Account;
 use App\Models\Transaction;
 use App\Support\Money;
 use Illuminate\Http\Request;
@@ -16,21 +15,28 @@ class TransactionController extends Controller
     {
         $user = $request->user();
 
-        $transactions = Account::where('user_id', $user->id)
-            ->with(['transactions' => fn ($query) => $query->latest()])
+        $type = $request->query('type');
+        $type = in_array($type, ['Credit', 'Debit'], true) ? $type : null;
+
+        $transactions = Transaction::query()
+            ->with('account:id,user_id,name')
+            ->whereHas('account', fn ($query) => $query->where('user_id', $user->id))
+            ->when($type, fn ($query, $transactionType) => $query->where('transaction_type', $transactionType))
+            ->latest()
             ->get()
-            ->flatMap(fn ($account) => $account->transactions->map(fn ($transaction) => [
+            ->map(fn (Transaction $transaction) => [
                 'id' => $transaction->id,
                 'transfer_id' => $transaction->transfer_id,
                 'transaction_type' => $transaction->transaction_type,
                 'description' => $transaction->description,
                 'amount' => number_format($transaction->amount, 2, '.', ''),
                 'created_at' => $transaction->created_at->toDateTimeString(),
-                'account_name' => $account->name,
-            ]));
+                'account_name' => $transaction->account?->name ?? 'Account',
+            ]);
 
         return Inertia::render('transactions/index', [
             'transactions' => $transactions->sortByDesc('created_at')->values()->all(),
+            'filter' => $type,
         ]);
     }
 

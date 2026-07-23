@@ -108,7 +108,8 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
 
-                    <Card className="border shadow-sm">
+                    <Link href={transactions.index({ query: { type: 'Credit' } })} className="block">
+                    <Card className="border shadow-sm transition-all hover:border-emerald-500/50 hover:shadow-md">
                         <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
                                 <CardDescription>Money in · 30 days</CardDescription>
@@ -121,11 +122,13 @@ export default function Dashboard({
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-xs text-muted-foreground">Credits into your accounts</p>
+                            <p className="text-xs text-muted-foreground">Credits into your accounts · Review history</p>
                         </CardContent>
                     </Card>
+                    </Link>
 
-                    <Card className="border shadow-sm">
+                    <Link href={transactions.index({ query: { type: 'Debit' } })} className="block">
+                    <Card className="border shadow-sm transition-all hover:border-rose-500/50 hover:shadow-md">
                         <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
                                 <CardDescription>Money out · 30 days</CardDescription>
@@ -138,9 +141,10 @@ export default function Dashboard({
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-xs text-muted-foreground">Debits from your accounts</p>
+                            <p className="text-xs text-muted-foreground">Debits from your accounts · Review history</p>
                         </CardContent>
                     </Card>
+                    </Link>
 
                     <Card className="border shadow-sm">
                         <CardHeader className="pb-2">
