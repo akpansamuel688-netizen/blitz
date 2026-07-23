@@ -50,4 +50,22 @@ class TransferController extends Controller
 
         return back();
     }
+
+    public function update(Request $request, Transfer $transfer): RedirectResponse
+    {
+        abort_unless($transfer->user_id === $request->user()->id, 403);
+
+        $data = $request->validate([
+            'description' => ['nullable', 'string', 'max:255'],
+            'recipient_name' => ['nullable', 'string', 'max:150'],
+            'bank_name' => ['nullable', 'string', 'max:150'],
+            'recipient_account_number' => ['nullable', 'string', 'max:34'],
+            'iban' => ['nullable', 'string', 'max:34'],
+            'swift_bic' => ['nullable', 'string', 'max:11'],
+        ]);
+
+        $transfer->update($data);
+
+        return back();
+    }
 }

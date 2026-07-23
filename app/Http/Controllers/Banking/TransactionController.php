@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Support\Money;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -67,5 +68,16 @@ class TransactionController extends Controller
                 'reference' => $transaction->transfer->description,
             ] : null,
         ]);
+    }
+
+    public function update(Request $request, Transaction $transaction): RedirectResponse
+    {
+        $transaction->load('account:id,user_id');
+        abort_unless($transaction->account?->user_id === $request->user()->id, 403);
+
+        $data = $request->validate(['description' => ['nullable', 'string', 'max:255']]);
+        $transaction->update($data);
+
+        return back();
     }
 }

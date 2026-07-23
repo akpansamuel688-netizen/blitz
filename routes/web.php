@@ -28,9 +28,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+    Route::patch('transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
 
     Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
     Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
+    Route::patch('transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
     Route::delete('beneficiaries/{beneficiary}', [BeneficiaryController::class, 'destroy'])->name('beneficiaries.destroy');
 
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index');
