@@ -131,6 +131,14 @@ class AdminDashboardTest extends TestCase
         ]);
         $this->assertDatabaseHas('transactions', ['description' => 'Food']);
         $this->assertDatabaseHas('transactions', ['description' => 'Charity']);
+        $generatedTransactions = Transaction::query()->orderBy('created_at')->get();
+        $this->assertCount(3, $generatedTransactions->map(fn (Transaction $transaction) => $transaction->created_at->getTimestamp())->unique()->all());
+
+        foreach ($generatedTransactions as $transaction) {
+            $this->assertTrue($transaction->created_at->gte('2026-07-01 00:00:00'));
+            $this->assertTrue($transaction->created_at->lte('2026-07-03 23:59:59'));
+        }
+
         $this->assertSame('576.50', (string) $account->fresh()->balance);
     }
 

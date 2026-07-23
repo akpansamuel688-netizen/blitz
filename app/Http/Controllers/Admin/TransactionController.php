@@ -73,18 +73,19 @@ class TransactionController extends Controller
 
             $start = Carbon::parse($data['start_date'])->startOfDay();
             $end = Carbon::parse($data['end_date'])->endOfDay();
-            $seconds = max(0, $end->diffInSeconds($start));
+            $seconds = $start->diffInSeconds($end);
 
             for ($index = 0; $index < $data['count']; $index++) {
-                $at = $data['count'] === 1 ? $start : $start->copy()->addSeconds((int) round(($seconds * $index) / ($data['count'] - 1)));
-                Transaction::query()->create([
+                $slotStart = intdiv($seconds * $index, $data['count']);
+                $slotEnd = intdiv($seconds * ($index + 1), $data['count']);
+                $at = $start->copy()->addSeconds(random_int($slotStart, max($slotStart, $slotEnd - 1)));
+                $transaction = new Transaction([
                     'account_id' => $account->id,
                     'transaction_type' => $data['transaction_type'],
                     'amount' => Money::fromCents($amount),
                     'description' => self::GENERATED_PAYMENT_DESCRIPTIONS[$index % count(self::GENERATED_PAYMENT_DESCRIPTIONS)],
-                    'created_at' => $at,
-                    'updated_at' => $at,
                 ]);
+                $transaction->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
             }
 
             $account->update(['balance' => Money::fromCents($data['transaction_type'] === 'Credit' ? $balance + $total : $balance - $total)]);
