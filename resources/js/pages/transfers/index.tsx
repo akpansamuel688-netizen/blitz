@@ -1,5 +1,5 @@
 import { Form, Head, router } from '@inertiajs/react';
-import { CheckCircle2, Landmark, Plus, Repeat2, Send, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Landmark, LoaderCircle, Plus, Repeat2, Send, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,7 @@ const statusVariant: Record<Transfer['status'], 'default' | 'secondary' | 'destr
 export default function Transfers({ accounts, transfers, beneficiaries, dailyLimit, dailyRemaining }: Props) {
     const [transferType, setTransferType] = useState<Transfer['transfer_type']>('internal');
     const [confirmation, setConfirmation] = useState(false);
+    const [processingTransfer, setProcessingTransfer] = useState(false);
     const [pendingReceipt, setPendingReceipt] = useState<Receipt | null>(null);
     const [receipt, setReceipt] = useState<Receipt | null>(null);
 
@@ -47,6 +48,12 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
         setConfirmation(true);
     };
 
+    const processTransfer = () => {
+        setConfirmation(false);
+        setProcessingTransfer(true);
+        window.setTimeout(() => document.getElementById('transfer-form')?.requestSubmit(), 900);
+    };
+
     return <>
         <Head title="Transfers" />
         <div className="space-y-6">
@@ -54,7 +61,7 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
             <Card className="border shadow-sm">
                 <CardHeader><CardTitle className="flex items-center gap-2"><Send className="size-5 text-brand" /> Send money</CardTitle><CardDescription>Internal transfers are immediate. Domestic and wire transfers are recorded with their bank details.</CardDescription></CardHeader>
                 <CardContent>
-                    <Form id="transfer-form" action="/transfers" method="post" className="grid gap-4 sm:grid-cols-2" onSuccess={() => { setConfirmation(false); setReceipt(pendingReceipt); }}>
+                    <Form id="transfer-form" action="/transfers" method="post" className="grid gap-4 sm:grid-cols-2" onSuccess={() => { setConfirmation(false); setProcessingTransfer(false); setReceipt(pendingReceipt); }} onError={() => setProcessingTransfer(false)}>
                         {({ processing, errors }) => <>
                             <div className="grid gap-2 sm:col-span-2">
                                 <Label htmlFor="transfer_type">Transfer type</Label>
@@ -83,13 +90,14 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
                 <CardContent>{transfers.length === 0 ? <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">No transfers have been sent yet.</div> : <div className="grid gap-3">{transfers.map((transfer) => <div key={transfer.id} className="rounded-2xl border border-border p-4"><div className="flex items-start justify-between gap-4"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Landmark className="size-4 text-brand" /><p className="font-medium capitalize">{transfer.transfer_type} transfer to {transfer.destination_name ?? 'recipient'}</p><Badge variant={statusVariant[transfer.status]} className="capitalize">{transfer.status}</Badge></div><p className="mt-1 text-sm text-muted-foreground">From {transfer.source_account_name}{transfer.bank_name ? ` · ${transfer.bank_name}` : ''}{transfer.description ? ` · ${transfer.description}` : ''}</p>{transfer.created_at && <p className="mt-1 text-xs text-muted-foreground">Initiated {new Date(transfer.created_at).toLocaleString()}</p>}</div><p className="shrink-0 font-semibold tabular-nums">{formatCurrency(transfer.amount, transfer.currency)}</p></div></div>)}</div>}</CardContent>
             </Card>
         </div>
-        <Dialog open={confirmation} onOpenChange={setConfirmation}><DialogContent><DialogHeader><DialogTitle>Confirm transfer</DialogTitle><DialogDescription>Check the total debit before sending.</DialogDescription></DialogHeader><ReceiptDetails receipt={pendingReceipt} /><DialogFooter><Button variant="outline" onClick={() => setConfirmation(false)}>Edit</Button><Button type="submit" form="transfer-form">Confirm and send</Button></DialogFooter></DialogContent></Dialog>
+        <Dialog open={confirmation} onOpenChange={setConfirmation}><DialogContent className="sm:max-w-2xl p-8"><DialogHeader><DialogTitle className="text-2xl">Confirm transfer</DialogTitle><DialogDescription className="text-base">Check the total debit before sending.</DialogDescription></DialogHeader><ReceiptDetails receipt={pendingReceipt} /><DialogFooter className="mt-4 gap-3"><Button variant="outline" size="lg" onClick={() => setConfirmation(false)}>Edit</Button><Button size="lg" onClick={processTransfer}>Confirm and send</Button></DialogFooter></DialogContent></Dialog>
+        <Dialog open={processingTransfer} onOpenChange={() => undefined}><DialogContent className="sm:max-w-lg p-8"><div className="flex flex-col items-center py-6 text-center"><div className="flex size-16 items-center justify-center rounded-full bg-brand/10 text-brand"><LoaderCircle className="size-8 animate-spin" /></div><DialogTitle className="mt-5 text-2xl">Processing transfer</DialogTitle><DialogDescription className="mt-2 text-base">Securing your transfer and confirming available funds…</DialogDescription></div></DialogContent></Dialog>
         <Dialog open={receipt !== null} onOpenChange={(open) => !open && setReceipt(null)}><DialogContent><DialogHeader><DialogTitle className="flex items-center gap-2"><CheckCircle2 className="size-5 text-emerald-600" /> Transfer successful</DialogTitle><DialogDescription>Your transfer has been recorded.</DialogDescription></DialogHeader><ReceiptDetails receipt={receipt} /><DialogFooter><Button onClick={() => setReceipt(null)}>Done</Button></DialogFooter></DialogContent></Dialog>
     </>;
 }
 
 function ReceiptDetails({ receipt }: { receipt: Receipt | null }) {
-    return receipt && <div className="rounded-xl bg-muted p-4 text-sm"><p className="capitalize">{receipt.type} transfer</p><p>Amount: {formatCurrency(receipt.amount)}</p><p>Fee: {formatCurrency(receipt.fee)}</p><p className="font-medium">Total debit: {formatCurrency(Number(receipt.amount) + Number(receipt.fee))}</p></div>;
+    return receipt && <div className="rounded-2xl bg-muted p-6 text-base"><p className="text-lg font-semibold capitalize">{receipt.type} transfer</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><p>Amount: <span className="font-medium">{formatCurrency(receipt.amount)}</span></p><p>Fee: <span className="font-medium">{formatCurrency(receipt.fee)}</span></p></div><p className="mt-5 border-t pt-4 text-lg font-semibold">Total debit: {formatCurrency(Number(receipt.amount) + Number(receipt.fee))}</p></div>;
 }
 
 function Field({ name, label, error, placeholder, type = 'text', defaultValue, className = '', required = true }: { name: string; label: string; error?: string; placeholder?: string; type?: string; defaultValue?: string; className?: string; required?: boolean }) {
