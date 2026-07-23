@@ -60,7 +60,7 @@ export default function Transactions({ transactions: transactionItems, filter }:
                                                     {transaction.transaction_type} · {transaction.account_name}
                                                 </p>
                                             </div>
-                                            <p className="text-right text-sm font-semibold">
+                                            <p className={`text-right text-sm font-semibold ${filter === 'Debit' ? 'text-rose-600 dark:text-rose-400' : ''}`}>
                                                 {formatCurrency(transaction.amount)}
                                             </p>
                                         </div>
