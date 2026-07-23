@@ -89,6 +89,42 @@ class AdminDashboardTest extends TestCase
             );
     }
 
+    public function test_admin_can_create_multiple_test_users(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.test-users.store'), [
+                'name_prefix' => 'QA User',
+                'email_prefix' => 'qa-user',
+                'email_domain' => 'example.test',
+                'password' => 'test-password',
+                'count' => 3,
+            ])
+            ->assertRedirect(route('admin.users.index'));
+
+        $this->assertDatabaseCount('users', 4);
+        $this->assertDatabaseHas('users', ['name' => 'QA User 1', 'email' => 'qa-user-1@example.test', 'is_admin' => false]);
+        $this->assertDatabaseHas('users', ['name' => 'QA User 3', 'email' => 'qa-user-3@example.test', 'is_admin' => false]);
+    }
+
+    public function test_admin_can_delete_a_test_user_but_not_an_administrator(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $testUser = User::factory()->create(['is_admin' => false]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.users.destroy', $testUser))
+            ->assertRedirect(route('admin.users.index'));
+
+        $this->assertModelMissing($testUser);
+
+        $this->delete(route('admin.users.destroy', $admin))
+            ->assertSessionHas('error');
+
+        $this->assertModelExists($admin);
+    }
+
     public function test_admin_can_view_user_detail(): void
     {
         $admin = User::factory()->admin()->create();

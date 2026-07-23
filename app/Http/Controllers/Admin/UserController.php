@@ -5,12 +5,64 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\Money;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class UserController extends Controller
 {
+    public function storeTestUsers(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name_prefix' => ['required', 'string', 'max:100'],
+            'email_prefix' => ['required', 'regex:/^[a-z0-9][a-z0-9._-]{0,50}$/i'],
+            'email_domain' => ['required', 'regex:/^[a-z0-9.-]+$/i', 'max:100'],
+            'password' => ['required', 'string', 'min:8', 'max:255'],
+            'count' => ['required', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $users = collect(range(1, $data['count']))->map(fn (int $number) => [
+            'name' => $data['count'] === 1 ? $data['name_prefix'] : $data['name_prefix'].' '.$number,
+            'email' => $data['email_prefix'].'-'.$number.'@'.$data['email_domain'],
+        ]);
+
+        if ($users->contains(fn (array $user) => ! filter_var($user['email'], FILTER_VALIDATE_EMAIL))) {
+            throw ValidationException::withMessages(['email_domain' => 'Enter a valid email domain.']);
+        }
+
+        $existingEmail = User::query()->whereIn('email', $users->pluck('email'))->value('email');
+
+        if ($existingEmail) {
+            throw ValidationException::withMessages(['email_prefix' => "The generated email {$existingEmail} is already in use. Choose another prefix."]);
+        }
+
+        DB::transaction(function () use ($users, $data): void {
+            $users->each(function (array $attributes) use ($data): void {
+                $user = new User([
+                    ...$attributes,
+                    'password' => $data['password'],
+                ]);
+                $user->forceFill(['email_verified_at' => now(), 'is_admin' => false])->save();
+            });
+        });
+
+        return to_route('admin.users.index')->with('success', "Created {$data['count']} test user(s).");
+    }
+
+    public function destroy(User $user): RedirectResponse
+    {
+        if ($user->isAdmin()) {
+            return back()->with('error', 'Administrator accounts cannot be deleted from the user directory.');
+        }
+
+        $user->delete();
+
+        return to_route('admin.users.index')->with('success', 'Test user deleted.');
+    }
+
     public function index(Request $request): Response
     {
         $search = trim((string) $request->query('search', ''));

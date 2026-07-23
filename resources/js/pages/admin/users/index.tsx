@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import { Search, Shield, Users } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -86,6 +86,49 @@ export default function AdminUsersIndex({ users, filters, summary }: Props) {
 
                 <Card className="border shadow-sm">
                     <CardHeader>
+                        <CardTitle>Create test users</CardTitle>
+                        <CardDescription>
+                            Create 1–100 customer-only test accounts. Emails are generated as prefix-number@domain.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Form action="/admin/users/test-users" method="post" className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                            {({ processing, errors }) => <>
+                                <div className="grid gap-2">
+                                    <label htmlFor="name_prefix" className="text-sm font-medium">Name prefix</label>
+                                    <Input id="name_prefix" name="name_prefix" defaultValue="Test User" required />
+                                    <p className="text-xs text-destructive">{errors.name_prefix}</p>
+                                </div>
+                                <div className="grid gap-2">
+                                    <label htmlFor="email_prefix" className="text-sm font-medium">Email prefix</label>
+                                    <Input id="email_prefix" name="email_prefix" defaultValue="test-user" required />
+                                    <p className="text-xs text-destructive">{errors.email_prefix}</p>
+                                </div>
+                                <div className="grid gap-2">
+                                    <label htmlFor="email_domain" className="text-sm font-medium">Email domain</label>
+                                    <Input id="email_domain" name="email_domain" defaultValue="example.test" required />
+                                    <p className="text-xs text-destructive">{errors.email_domain}</p>
+                                </div>
+                                <div className="grid gap-2">
+                                    <label htmlFor="password" className="text-sm font-medium">Password</label>
+                                    <Input id="password" name="password" type="password" defaultValue="password" minLength={8} required />
+                                    <p className="text-xs text-destructive">{errors.password}</p>
+                                </div>
+                                <div className="grid gap-2">
+                                    <label htmlFor="count" className="text-sm font-medium">Quantity</label>
+                                    <div className="flex gap-2">
+                                        <Input id="count" name="count" type="number" min="1" max="100" defaultValue="5" required />
+                                        <Button disabled={processing}>Create</Button>
+                                    </div>
+                                    <p className="text-xs text-destructive">{errors.count}</p>
+                                </div>
+                            </>}
+                        </Form>
+                    </CardContent>
+                </Card>
+
+                <Card className="border shadow-sm">
+                    <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Users className="size-5 text-brand" />
                             Directory
@@ -132,9 +175,25 @@ export default function AdminUsersIndex({ users, filters, summary }: Props) {
                                                 {formatDateTime(user.created_at)}
                                             </td>
                                             <td className="py-3 text-right">
-                                                <Button variant="ghost" size="sm" asChild>
-                                                    <Link href={admin.users.show(user.id)}>View</Link>
-                                                </Button>
+                                                <div className="flex justify-end gap-1">
+                                                    <Button variant="ghost" size="sm" asChild>
+                                                        <Link href={admin.users.show(user.id)}>View</Link>
+                                                    </Button>
+                                                    {!user.is_admin && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-destructive hover:text-destructive"
+                                                            onClick={() => {
+                                                                if (window.confirm(`Delete ${user.name}? This also removes their accounts and related banking data.`)) {
+                                                                    router.delete(`/admin/users/${user.id}`);
+                                                                }
+                                                            }}
+                                                        >
+                                                            Delete
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
