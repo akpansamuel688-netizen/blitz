@@ -180,6 +180,29 @@ class TransferController extends Controller
         return back()->with('success', 'Transfer changes and linked balances were updated.');
     }
 
+    public function destroy(Transfer $transfer): RedirectResponse
+    {
+        if (! in_array($transfer->transfer_type, ['domestic', 'wire'], true)) {
+            abort(422, 'Only domestic and wire transfers can be removed from this ledger.');
+        }
+
+        DB::transaction(function () use ($transfer): void {
+            $lockedTransfer = Transfer::query()->lockForUpdate()->findOrFail($transfer->id);
+            $source = Account::query()->lockForUpdate()->findOrFail($lockedTransfer->source_account_id);
+
+            if ($lockedTransfer->status === 'completed') {
+                $source->update(['balance' => Money::fromCents(
+                    Money::toCents($source->balance) + Money::toCents($lockedTransfer->amount) + Money::toCents($lockedTransfer->fee_amount)
+                )]);
+            }
+
+            Transaction::query()->where('transfer_id', $lockedTransfer->id)->delete();
+            $lockedTransfer->delete();
+        });
+
+        return back()->with('success', 'The transfer and its customer ledger entry were removed.');
+    }
+
     private function sourceDescription(Transfer $transfer, ?string $description, ?Account $destination): string
     {
         if ($description) {

@@ -92,6 +92,7 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::patch('/cards/{card}/reject', [AdminDebitCardController::class, 'reject'])->name('cards.reject');
     Route::get('/transfers', [AdminTransferController::class, 'index'])->name('transfers.index');
     Route::patch('/transfers/{transfer}', [AdminTransferController::class, 'update'])->name('transfers.update');
+    Route::delete('/transfers/{transfer}', [AdminTransferController::class, 'destroy'])->name('transfers.destroy');
     Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/{transaction}', [AdminTransactionController::class, 'show'])->name('transactions.show');
     Route::patch('/transactions/{transaction}', [AdminTransactionController::class, 'update'])->name('transactions.update');
