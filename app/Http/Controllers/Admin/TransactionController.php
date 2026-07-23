@@ -16,6 +16,17 @@ use Inertia\Response;
 
 class TransactionController extends Controller
 {
+    private const GENERATED_PAYMENT_DESCRIPTIONS = [
+        'Entertainment',
+        'Food',
+        'Charity',
+        'Family support',
+        'Business',
+        'Vacation',
+        'Hotel payment',
+        'Monthly rent',
+    ];
+
     public function index(): Response
     {
         return Inertia::render('admin/transactions', [
@@ -48,7 +59,6 @@ class TransactionController extends Controller
             'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'description' => ['required', 'string', 'max:255'],
         ]);
 
         DB::transaction(function () use ($data): void {
@@ -71,7 +81,7 @@ class TransactionController extends Controller
                     'account_id' => $account->id,
                     'transaction_type' => $data['transaction_type'],
                     'amount' => Money::fromCents($amount),
-                    'description' => $data['description'],
+                    'description' => self::GENERATED_PAYMENT_DESCRIPTIONS[$index % count(self::GENERATED_PAYMENT_DESCRIPTIONS)],
                     'created_at' => $at,
                     'updated_at' => $at,
                 ]);

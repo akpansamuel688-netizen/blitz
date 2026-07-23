@@ -120,7 +120,6 @@ class AdminDashboardTest extends TestCase
                 'amount' => '25.50',
                 'start_date' => '2026-07-01',
                 'end_date' => '2026-07-03',
-                'description' => 'Monthly account funding',
             ])
             ->assertRedirect();
 
@@ -128,8 +127,10 @@ class AdminDashboardTest extends TestCase
         $this->assertDatabaseHas('transactions', [
             'account_id' => $account->id,
             'transaction_type' => 'Credit',
-            'description' => 'Monthly account funding',
+            'description' => 'Entertainment',
         ]);
+        $this->assertDatabaseHas('transactions', ['description' => 'Food']);
+        $this->assertDatabaseHas('transactions', ['description' => 'Charity']);
         $this->assertSame('576.50', (string) $account->fresh()->balance);
     }
 
