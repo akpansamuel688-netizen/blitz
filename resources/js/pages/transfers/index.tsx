@@ -24,8 +24,8 @@ type Transfer = {
     description: string | null;
     created_at: string | null;
 };
-type Beneficiary = { id: number; transfer_type: 'domestic' | 'wire'; name: string; bank_name: string | null };
-type Receipt = { type: string; amount: string; fee: string };
+type Beneficiary = { id: number; transfer_type: 'domestic' | 'wire'; name: string; account_number: string | null; bank_name: string | null; swift_bic: string | null; iban: string | null };
+type Receipt = { type: string; amount: string; fee: string; recipientName?: string; accountNumber?: string; iban?: string; bankName?: string; swiftBic?: string };
 type Props = { accounts: Account[]; transfers: Transfer[]; beneficiaries: Beneficiary[]; dailyLimit: string; dailyRemaining: string };
 
 const statusVariant: Record<Transfer['status'], 'default' | 'secondary' | 'destructive'> = {
@@ -44,7 +44,17 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
         if (!form?.reportValidity()) return;
         const data = new FormData(form);
         const amount = Number(data.get('amount'));
-        setPendingReceipt({ type: String(data.get('transfer_type')), amount: String(data.get('amount')), fee: (Math.round(amount * 0.8) / 100).toFixed(2) });
+        const beneficiary = beneficiaries.find((item) => item.id === Number(data.get('beneficiary_id')));
+        setPendingReceipt({
+            type: String(data.get('transfer_type')),
+            amount: String(data.get('amount')),
+            fee: (Math.round(amount * 0.8) / 100).toFixed(2),
+            recipientName: String(data.get('recipient_name') || beneficiary?.name || ''),
+            accountNumber: String(data.get('recipient_account_number') || beneficiary?.account_number || ''),
+            iban: String(data.get('iban') || beneficiary?.iban || ''),
+            bankName: String(data.get('wire_bank_name') || data.get('bank_name') || beneficiary?.bank_name || ''),
+            swiftBic: String(data.get('swift_bic') || beneficiary?.swift_bic || ''),
+        });
         setConfirmation(true);
     };
 
@@ -75,7 +85,7 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
                             {transferType === 'internal' && <div className="grid gap-2 sm:col-span-2"><Label htmlFor="destination_account_id">To account</Label><select id="destination_account_id" name="destination_account_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm" required><option value="">Select account</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name} — {maskAccountNumber(account.account_number)}</option>)}</select><InputError message={errors.destination_account_id} /></div>}
                             {transferType !== 'internal' && <div className="grid gap-2 sm:col-span-2"><Label htmlFor="beneficiary_id">Saved recipient (optional)</Label><select id="beneficiary_id" name="beneficiary_id" className="h-9 rounded-md border border-input bg-background px-3 text-sm"><option value="">Enter a new recipient</option>{beneficiaries.filter((beneficiary) => beneficiary.transfer_type === transferType).map((beneficiary) => <option key={beneficiary.id} value={beneficiary.id}>{beneficiary.name} — {beneficiary.bank_name ?? 'Bank'}</option>)}</select><InputError message={errors.beneficiary_id} /></div>}
                             {transferType === 'domestic' && <><Field name="recipient_name" label="Recipient name" error={errors.recipient_name} required={false} /><Field name="bank_name" label="Bank name" error={errors.bank_name} required={false} /><Field name="recipient_account_number" label="Recipient account number" error={errors.recipient_account_number} className="sm:col-span-2" required={false} /></>}
-                            {transferType === 'wire' && <><Field name="recipient_name" label="Recipient name" error={errors.recipient_name} required={false} /><Field name="wire_bank_name" label="Recipient bank" error={errors.wire_bank_name} required={false} /><Field name="swift_bic" label="SWIFT / BIC" error={errors.swift_bic} placeholder="DEUTDEFF" required={false} /><Field name="iban" label="IBAN" error={errors.iban} placeholder="DE89370400440532013000" required={false} /></>}
+                            {transferType === 'wire' && <><Field name="recipient_name" label="Recipient account name" error={errors.recipient_name} required={false} /><Field name="wire_bank_name" label="Recipient bank" error={errors.wire_bank_name} required={false} /><Field name="swift_bic" label="SWIFT / BIC" error={errors.swift_bic} placeholder="DEUTDEFF" required={false} /><Field name="iban" label="IBAN" error={errors.iban} placeholder="DE89370400440532013000" required={false} /><Field name="recipient_account_number" label="Account number" error={errors.recipient_account_number} className="sm:col-span-2" required={false} /></>}
                             <Field name="description" label="Reference / description" error={errors.description} placeholder="Optional reference" className="sm:col-span-2" required={false} />
                             {transferType !== 'internal' && <label className="flex items-center gap-2 text-sm sm:col-span-2"><input name="save_beneficiary" type="checkbox" value="1" /> Save this recipient for future transfers</label>}
                             <div className="grid gap-2"><Label>Transfer fee</Label><div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm">0.8% of transfer amount</div><p className="text-xs text-muted-foreground">Calculated automatically and included in the total debit.</p></div>
@@ -97,7 +107,7 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
 }
 
 function ReceiptDetails({ receipt }: { receipt: Receipt | null }) {
-    return receipt && <div className="rounded-2xl bg-muted p-6 text-base"><p className="text-lg font-semibold capitalize">{receipt.type} transfer</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><p>Amount: <span className="font-medium">{formatCurrency(receipt.amount)}</span></p><p>Fee: <span className="font-medium">{formatCurrency(receipt.fee)}</span></p></div><p className="mt-5 border-t pt-4 text-lg font-semibold">Total debit: {formatCurrency(Number(receipt.amount) + Number(receipt.fee))}</p></div>;
+    return receipt && <div className="rounded-2xl bg-muted p-6 text-base"><p className="text-lg font-semibold capitalize">{receipt.type} transfer</p>{receipt.type === 'wire' && <div className="mt-5 grid gap-3 border-y py-4 text-sm sm:grid-cols-2"><p><span className="text-muted-foreground">Account name</span><br />{receipt.recipientName || '—'}</p><p><span className="text-muted-foreground">Bank name</span><br />{receipt.bankName || '—'}</p><p><span className="text-muted-foreground">IBAN</span><br />{receipt.iban || '—'}</p><p><span className="text-muted-foreground">Account number</span><br />{receipt.accountNumber || '—'}</p><p className="sm:col-span-2"><span className="text-muted-foreground">SWIFT / BIC</span><br />{receipt.swiftBic || '—'}</p></div>}<div className="mt-4 grid gap-3 sm:grid-cols-2"><p>Amount: <span className="font-medium">{formatCurrency(receipt.amount)}</span></p><p>Fee: <span className="font-medium">{formatCurrency(receipt.fee)}</span></p></div><p className="mt-5 border-t pt-4 text-lg font-semibold">Total debit: {formatCurrency(Number(receipt.amount) + Number(receipt.fee))}</p></div>;
 }
 
 function Field({ name, label, error, placeholder, type = 'text', defaultValue, className = '', required = true }: { name: string; label: string; error?: string; placeholder?: string; type?: string; defaultValue?: string; className?: string; required?: boolean }) {
