@@ -49,17 +49,6 @@ class TransferService
                 throw ValidationException::withMessages(['amount' => 'The transfer amount must be greater than zero.']);
             }
 
-            $dailyLimitInCents = Money::toCents(config('banking.daily_transfer_limit'));
-            $dailyTotalInCents = Money::toCents(Transfer::query()
-                ->where('user_id', $user->id)
-                ->whereIn('status', ['pending', 'completed'])
-                ->whereDate('created_at', today())
-                ->sum('amount'));
-
-            if ($dailyTotalInCents + $amountInCents > $dailyLimitInCents) {
-                throw ValidationException::withMessages(['amount' => 'This transfer would exceed your daily transfer limit.']);
-            }
-
             if ($amountInCents + $feeInCents > $sourceBalanceInCents) {
                 throw ValidationException::withMessages(['amount' => 'Insufficient funds for this transfer.']);
             }

@@ -35,16 +35,10 @@ class TransferController extends Controller
         $accounts = Account::query()->where('user_id', $user->id)
             ->orderBy('name')->get(['id', 'name', 'account_number', 'balance', 'currency']);
         $beneficiaries = Beneficiary::query()->where('user_id', $user->id)->orderBy('name')->get();
-        $usedToday = Transfer::query()->where('user_id', $user->id)->whereIn('status', ['pending', 'completed'])
-            ->whereDate('created_at', today())->sum('amount');
-        $dailyLimit = config('banking.daily_transfer_limit');
-
         return Inertia::render('transfers/index', [
             'accounts' => $accounts,
             'transfers' => $transfers,
             'beneficiaries' => $beneficiaries,
-            'dailyLimit' => Money::format($dailyLimit),
-            'dailyRemaining' => Money::format(max(0, (float) $dailyLimit - (float) $usedToday)),
         ]);
     }
 

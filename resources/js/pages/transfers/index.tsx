@@ -26,13 +26,13 @@ type Transfer = {
 };
 type Beneficiary = { id: number; transfer_type: 'domestic' | 'wire'; name: string; account_number: string | null; bank_name: string | null; swift_bic: string | null; iban: string | null };
 type Receipt = { type: string; amount: string; fee: string; recipientName?: string; accountNumber?: string; iban?: string; bankName?: string; swiftBic?: string };
-type Props = { accounts: Account[]; transfers: Transfer[]; beneficiaries: Beneficiary[]; dailyLimit: string; dailyRemaining: string };
+type Props = { accounts: Account[]; transfers: Transfer[]; beneficiaries: Beneficiary[] };
 
 const statusVariant: Record<Transfer['status'], 'default' | 'secondary' | 'destructive'> = {
     completed: 'default', pending: 'secondary', failed: 'destructive',
 };
 
-export default function Transfers({ accounts, transfers, beneficiaries, dailyLimit, dailyRemaining }: Props) {
+export default function Transfers({ accounts, transfers, beneficiaries }: Props) {
     const [transferType, setTransferType] = useState<Transfer['transfer_type']>('internal');
     const [confirmation, setConfirmation] = useState(false);
     const [processingTransfer, setProcessingTransfer] = useState(false);
@@ -67,7 +67,7 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
     return <>
         <Head title="Transfers" />
         <div className="space-y-6">
-            <div><h1 className="text-2xl font-semibold tracking-tight">Money transfers</h1><p className="mt-1 text-sm text-muted-foreground">Move funds between your accounts or send payments to other banks.</p><p className="mt-2 text-sm text-muted-foreground">Daily limit: {formatCurrency(dailyLimit)} · Remaining today: {formatCurrency(dailyRemaining)}</p></div>
+            <div><h1 className="text-2xl font-semibold tracking-tight">Money transfers</h1><p className="mt-1 text-sm text-muted-foreground">Move funds between your accounts or send payments to other banks.</p></div>
             <Card className="border shadow-sm">
                 <CardHeader><CardTitle className="flex items-center gap-2"><Send className="size-5 text-brand" /> Send money</CardTitle><CardDescription>Internal transfers are immediate. Domestic and wire transfers are recorded with their bank details.</CardDescription></CardHeader>
                 <CardContent>
@@ -107,7 +107,7 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
 }
 
 function ReceiptDetails({ receipt }: { receipt: Receipt | null }) {
-    return receipt && <div className="rounded-2xl bg-muted p-6 text-base"><p className="text-lg font-semibold capitalize">{receipt.type} transfer</p>{receipt.type === 'wire' && <div className="mt-5 grid gap-3 border-y py-4 text-sm sm:grid-cols-2"><p><span className="text-muted-foreground">Account name</span><br />{receipt.recipientName || '—'}</p><p><span className="text-muted-foreground">Bank name</span><br />{receipt.bankName || '—'}</p><p><span className="text-muted-foreground">IBAN</span><br />{receipt.iban || '—'}</p><p><span className="text-muted-foreground">Account number</span><br />{receipt.accountNumber || '—'}</p><p className="sm:col-span-2"><span className="text-muted-foreground">SWIFT / BIC</span><br />{receipt.swiftBic || '—'}</p></div>}<div className="mt-4 grid gap-3 sm:grid-cols-2"><p>Amount: <span className="font-medium">{formatCurrency(receipt.amount)}</span></p><p>Fee: <span className="font-medium">{formatCurrency(receipt.fee)}</span></p></div><p className="mt-5 border-t pt-4 text-lg font-semibold">Total debit: {formatCurrency(Number(receipt.amount) + Number(receipt.fee))}</p></div>;
+    return receipt && <div className="rounded-2xl bg-muted p-6 text-base"><p className="text-lg font-semibold capitalize">{receipt.type} transfer</p>{['wire', 'domestic'].includes(receipt.type) && <div className="mt-5 grid gap-3 border-y py-4 text-sm sm:grid-cols-2"><p><span className="text-muted-foreground">Account name</span><br />{receipt.recipientName || '—'}</p><p><span className="text-muted-foreground">Bank name</span><br />{receipt.bankName || '—'}</p>{receipt.type === 'wire' && <p><span className="text-muted-foreground">IBAN</span><br />{receipt.iban || '—'}</p>}<p><span className="text-muted-foreground">Account number</span><br />{receipt.accountNumber || '—'}</p>{receipt.type === 'wire' && <p className="sm:col-span-2"><span className="text-muted-foreground">SWIFT / BIC</span><br />{receipt.swiftBic || '—'}</p>}</div>}<div className="mt-4 grid gap-3 sm:grid-cols-2"><p>Amount: <span className="font-medium">{formatCurrency(receipt.amount)}</span></p><p>Fee: <span className="font-medium">{formatCurrency(receipt.fee)}</span></p></div><p className="mt-5 border-t pt-4 text-lg font-semibold">Total debit: {formatCurrency(Number(receipt.amount) + Number(receipt.fee))}</p></div>;
 }
 
 function Field({ name, label, error, placeholder, type = 'text', defaultValue, className = '', required = true }: { name: string; label: string; error?: string; placeholder?: string; type?: string; defaultValue?: string; className?: string; required?: boolean }) {
