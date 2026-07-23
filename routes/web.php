@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\TransferController as AdminTransferController;
 use App\Http\Controllers\Banking\AccountController;
 use App\Http\Controllers\Banking\BillController;
 use App\Http\Controllers\Banking\BeneficiaryController;
@@ -52,6 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
         Route::get('/accounts', [AdminAccountController::class, 'index'])->name('accounts.index');
+        Route::get('/transfers', [AdminTransferController::class, 'index'])->name('transfers.index');
     });
 });
 

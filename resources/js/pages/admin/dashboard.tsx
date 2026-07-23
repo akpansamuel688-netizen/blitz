@@ -75,6 +75,12 @@ export default function AdminDashboard({
                                 All accounts
                             </Link>
                         </Button>
+                        <Button variant="outline" asChild>
+                            <Link href="/admin/transfers">
+                                <ListChecks className="size-4" />
+                                Transfer ledger
+                            </Link>
+                        </Button>
                     </div>
                 </div>
 

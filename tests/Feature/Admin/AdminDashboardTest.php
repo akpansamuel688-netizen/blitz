@@ -93,6 +93,20 @@ class AdminDashboardTest extends TestCase
             );
     }
 
+    public function test_admin_can_view_transfer_ledger(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.transfers.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('admin/transfers')
+                ->has('transfers.data')
+                ->has('filters')
+            );
+    }
+
     public function test_customer_cannot_list_admin_users(): void
     {
         $user = User::factory()->create();

@@ -91,6 +91,11 @@ const adminNavItems: NavItem[] = [
         href: admin.accounts.index(),
         icon: Shield,
     },
+    {
+        title: 'Transfers',
+        href: '/admin/transfers',
+        icon: Send,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
