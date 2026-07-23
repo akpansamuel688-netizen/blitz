@@ -59,7 +59,7 @@ export default function Transfers({ accounts, transfers, beneficiaries, dailyLim
                             <div className="grid gap-2 sm:col-span-2">
                                 <Label htmlFor="transfer_type">Transfer type</Label>
                                 <select id="transfer_type" name="transfer_type" value={transferType} onChange={(event) => setTransferType(event.target.value as Transfer['transfer_type'])} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
-                                    <option value="internal">Internal — my Blitz accounts</option><option value="domestic">Domestic — another bank</option><option value="wire">Wire — international</option>
+                                    <option value="internal">Internal</option><option value="domestic">Domestic</option><option value="wire">Wire — international</option>
                                 </select>
                                 <InputError message={errors.transfer_type} />
                             </div>

@@ -8,8 +8,6 @@ import {
     Receipt,
     Repeat2,
     Shield,
-    Tags,
-    Target,
     Send,
     Users,
     Wallet,
@@ -31,10 +29,8 @@ import accounts from '@/routes/accounts';
 import admin from '@/routes/admin';
 import bills from '@/routes/bills';
 import budgets from '@/routes/budgets';
-import categories from '@/routes/categories';
 import { dashboard } from '@/routes';
 import recurringTransfers from '@/routes/recurring-transfers';
-import savingsGoals from '@/routes/savings-goals';
 import transactions from '@/routes/transactions';
 import type { NavItem } from '@/types';
 
@@ -73,19 +69,9 @@ const moneyNavItems: NavItem[] = [
         icon: PiggyBank,
     },
     {
-        title: 'Savings goals',
-        href: savingsGoals.index(),
-        icon: Target,
-    },
-    {
         title: 'Recurring',
         href: recurringTransfers.index(),
         icon: Repeat2,
-    },
-    {
-        title: 'Categories',
-        href: categories.index(),
-        icon: Tags,
     },
 ];
 
