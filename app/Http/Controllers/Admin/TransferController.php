@@ -7,9 +7,11 @@ use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\Transfer;
 use App\Support\Money;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -56,6 +58,8 @@ class TransferController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'amount' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
             'status' => ['nullable', 'in:failed,completed'],
+            'date' => ['nullable', 'date_format:Y-m-d', 'required_with:time'],
+            'time' => ['nullable', 'date_format:H:i', 'required_with:date'],
             'recipient_name' => ['nullable', 'string', 'max:150'],
             'bank_name' => ['nullable', 'string', 'max:150'],
             'recipient_account_number' => ['nullable', 'string', 'max:34'],
@@ -63,7 +67,12 @@ class TransferController extends Controller
             'swift_bic' => ['nullable', 'string', 'max:11'],
         ]);
 
-        if (! array_key_exists('amount', $data) && ! array_key_exists('status', $data)) {
+        $newTimestamp = isset($data['date'], $data['time'])
+            ? Carbon::createFromFormat('Y-m-d H:i', $data['date'].' '.$data['time'])
+            : null;
+
+        if (! array_key_exists('amount', $data) && ! array_key_exists('status', $data) && ! $newTimestamp) {
+            unset($data['date'], $data['time']);
             $transfer->update($data);
 
             return back();
@@ -75,7 +84,7 @@ class TransferController extends Controller
             throw ValidationException::withMessages(['amount' => 'The transfer amount must be greater than zero.']);
         }
 
-        DB::transaction(function () use ($transfer, $data, $newAmount): void {
+        DB::transaction(function () use ($transfer, $data, $newAmount, $newTimestamp): void {
             $lockedTransfer = Transfer::query()->lockForUpdate()->findOrFail($transfer->id);
             $newStatus = $data['status'] ?? $lockedTransfer->status;
 
@@ -135,19 +144,24 @@ class TransferController extends Controller
             }
 
             $description = $data['description'] ?? $lockedTransfer->description;
-            $lockedTransfer->update([
-                ...$data,
+            $lockedTransfer->forceFill([
+                ...Arr::except($data, ['date', 'time']),
                 'amount' => Money::fromCents($newAmount),
                 'fee_amount' => Money::fromCents($newFee),
                 'status' => $newStatus,
                 'completed_at' => $newStatus === 'completed' ? ($lockedTransfer->completed_at ?? now()) : null,
-            ]);
+                ...($newTimestamp ? ['created_at' => $newTimestamp] : []),
+            ])->save();
             $source->update(['balance' => Money::fromCents($newSourceBalance)]);
             $sourceTransaction->update([
                 'amount' => Money::fromCents($newAmount + $newFee),
                 'status' => $newStatus === 'completed' ? 'completed' : 'failed',
                 'description' => $this->sourceDescription($lockedTransfer, $description, $destination),
             ]);
+
+            if ($newTimestamp) {
+                $sourceTransaction->forceFill(['created_at' => $newTimestamp])->save();
+            }
 
             if ($destination && $destinationTransaction) {
                 $destination->update(['balance' => Money::fromCents($newDestinationBalance)]);
@@ -156,6 +170,10 @@ class TransferController extends Controller
                     'status' => $newStatus === 'completed' ? 'completed' : 'failed',
                     'description' => $description ?: 'Internal transfer from '.$source->name,
                 ]);
+
+                if ($newTimestamp) {
+                    $destinationTransaction->forceFill(['created_at' => $newTimestamp])->save();
+                }
             }
         });
 

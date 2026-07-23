@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency, formatDateTime } from '@/lib/money';
 import TransferLedger from '@/components/admin/transfer-ledger';
+import TransferLedgerEditor from '@/components/admin/transfer-ledger-editor';
 
-type Transfer = { id: number; type: string; status: string; amount: string; fee: string; currency: string; customer: string; customer_email: string; source_account: string; recipient: string | null; bank_name: string | null; created_at: string | null };
+type Transfer = { id: number; type: string; status: string; amount: string; fee: string; currency: string; customer: string; customer_email: string; source_account: string; recipient: string | null; bank_name: string | null; description: string | null; created_at: string | null };
 type Props = { transfers: { data: Transfer[]; links: Array<{ url: string | null; label: string; active: boolean }>; total: number }; filters: { status: string; type: string } };
 
 function LegacyAdminTransfers({ transfers, filters }: Props) {
@@ -17,7 +18,7 @@ function LegacyAdminTransfers({ transfers, filters }: Props) {
 }
 
 export default function AdminTransfers({ transfers, filters }: Props) {
-    return <><Head title="Admin · Transfers" /><TransferLedger transfers={transfers} filters={filters} /></>;
+    return <><Head title="Admin · Transfers" /><TransferLedgerEditor transfers={transfers} filters={filters} /></>;
 }
 
 AdminTransfers.layout = { breadcrumbs: [{ title: 'Admin', href: '/admin' }, { title: 'Transfers', href: '/admin/transfers' }] };

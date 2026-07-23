@@ -462,7 +462,11 @@ class AdminDashboardTest extends TestCase
         $this->assertSame('failed', $sourceTransaction->fresh()->status);
         $this->assertSame('failed', $destinationTransaction->fresh()->status);
 
-        $this->patch(route('admin.transfers.update', $transfer), ['status' => 'completed'])
+        $this->patch(route('admin.transfers.update', $transfer), [
+            'status' => 'completed',
+            'date' => '2026-07-24',
+            'time' => '13:40',
+        ])
             ->assertRedirect();
 
         $this->assertSame('completed', $transfer->fresh()->status);
@@ -470,6 +474,9 @@ class AdminDashboardTest extends TestCase
         $this->assertSame('100.00', (string) $destination->fresh()->balance);
         $this->assertSame('completed', $sourceTransaction->fresh()->status);
         $this->assertSame('completed', $destinationTransaction->fresh()->status);
+        $this->assertSame('2026-07-24 13:40', $transfer->fresh()->created_at->format('Y-m-d H:i'));
+        $this->assertSame('2026-07-24 13:40', $sourceTransaction->fresh()->created_at->format('Y-m-d H:i'));
+        $this->assertSame('2026-07-24 13:40', $destinationTransaction->fresh()->created_at->format('Y-m-d H:i'));
     }
 
     public function test_customer_cannot_list_admin_users(): void
