@@ -96,6 +96,11 @@ const adminNavItems: NavItem[] = [
         href: '/admin/transfers',
         icon: Send,
     },
+    {
+        title: 'Transactions',
+        href: '/admin/transactions',
+        icon: ListChecks,
+    },
 ];
 
 const footerNavItems: NavItem[] = [

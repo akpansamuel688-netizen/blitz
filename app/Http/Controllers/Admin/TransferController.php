@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Transfer;
 use App\Support\Money;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,6 +36,7 @@ class TransferController extends Controller
                 'source_account' => $transfer->sourceAccount?->name ?? 'Account',
                 'recipient' => $transfer->destinationAccount?->name ?? $transfer->recipient_name,
                 'bank_name' => $transfer->bank_name,
+                'description' => $transfer->description,
                 'created_at' => $transfer->created_at?->toIso8601String(),
             ]);
 
@@ -42,5 +44,21 @@ class TransferController extends Controller
             'transfers' => $transfers,
             'filters' => ['status' => $status, 'type' => $type],
         ]);
+    }
+
+    public function update(Request $request, Transfer $transfer): RedirectResponse
+    {
+        $data = $request->validate([
+            'description' => ['nullable', 'string', 'max:255'],
+            'recipient_name' => ['nullable', 'string', 'max:150'],
+            'bank_name' => ['nullable', 'string', 'max:150'],
+            'recipient_account_number' => ['nullable', 'string', 'max:34'],
+            'iban' => ['nullable', 'string', 'max:34'],
+            'swift_bic' => ['nullable', 'string', 'max:11'],
+        ]);
+
+        $transfer->update($data);
+
+        return back();
     }
 }
