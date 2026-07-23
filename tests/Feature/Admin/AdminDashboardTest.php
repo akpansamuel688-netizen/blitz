@@ -7,6 +7,7 @@ use App\Models\DebitCard;
 use App\Models\Transaction;
 use App\Models\Transfer;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -302,7 +303,10 @@ class AdminDashboardTest extends TestCase
             $this->assertTrue($transaction->created_at->lte('2026-07-03 23:59:59'));
         }
 
-        $this->assertSame('576.50', (string) $account->fresh()->balance);
+        $amounts = $generatedTransactions->map(fn (Transaction $transaction) => Money::toCents($transaction->amount));
+        $this->assertCount(3, $amounts->unique());
+        $this->assertTrue($amounts->every(fn (int $amount) => $amount >= 100 && $amount <= 2_550));
+        $this->assertSame(Money::fromCents(50_000 + $amounts->sum()), (string) $account->fresh()->balance);
     }
 
     public function test_admin_can_generate_transactions_for_multiple_customers(): void
@@ -323,8 +327,39 @@ class AdminDashboardTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseCount('transactions', 4);
-        $this->assertSame('540.00', (string) $firstAccount->fresh()->balance);
-        $this->assertSame('240.00', (string) $secondAccount->fresh()->balance);
+        $firstAmounts = Transaction::query()->where('account_id', $firstAccount->id)->get()->map(fn (Transaction $transaction) => Money::toCents($transaction->amount));
+        $secondAmounts = Transaction::query()->where('account_id', $secondAccount->id)->get()->map(fn (Transaction $transaction) => Money::toCents($transaction->amount));
+        $this->assertCount(2, $firstAmounts->unique());
+        $this->assertCount(2, $secondAmounts->unique());
+        $this->assertSame(Money::fromCents(50_000 + $firstAmounts->sum()), (string) $firstAccount->fresh()->balance);
+        $this->assertSame(Money::fromCents(20_000 + $secondAmounts->sum()), (string) $secondAccount->fresh()->balance);
+    }
+
+    public function test_admin_generates_a_different_amount_for_each_transaction_in_the_selected_range(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $account = Account::factory()->create(['balance' => 0]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.transactions.generate'), [
+                'user_ids' => [$account->user_id],
+                'transaction_type' => 'Credit',
+                'count' => 5,
+                'min_amount' => '1.00',
+                'max_amount' => '100000.00',
+                'start_date' => '2026-07-01',
+                'end_date' => '2026-07-05',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect();
+
+        $transactions = Transaction::query()->where('account_id', $account->id)->get();
+        $amounts = $transactions->map(fn (Transaction $transaction) => Money::toCents($transaction->amount));
+
+        $this->assertCount(5, $transactions);
+        $this->assertCount(5, $amounts->unique());
+        $this->assertTrue($amounts->every(fn (int $amount) => $amount >= 100 && $amount <= 10_000_000));
+        $this->assertSame(Money::fromCents($amounts->sum()), (string) $account->fresh()->balance);
     }
 
     public function test_admin_can_generate_transactions_for_a_customer_without_an_account(): void
@@ -344,8 +379,9 @@ class AdminDashboardTest extends TestCase
             ->assertRedirect();
 
         $account = Account::query()->where('user_id', $customer->id)->firstOrFail();
-        $this->assertSame('50.00', (string) $account->balance);
-        $this->assertDatabaseHas('transactions', ['account_id' => $account->id, 'amount' => '50.00']);
+        $transaction = Transaction::query()->where('account_id', $account->id)->sole();
+        $this->assertTrue(Money::toCents($transaction->amount) >= 100 && Money::toCents($transaction->amount) <= 5_000);
+        $this->assertSame((string) $transaction->amount, (string) $account->balance);
     }
 
     public function test_admin_can_edit_transaction_date_time_amount_and_status_with_an_audit_record(): void

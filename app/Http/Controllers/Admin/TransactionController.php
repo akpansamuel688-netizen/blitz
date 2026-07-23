@@ -173,7 +173,9 @@ class TransactionController extends Controller
             'user_ids.*' => ['integer', 'exists:users,id'],
             'transaction_type' => ['required', 'in:Credit,Debit'],
             'count' => ['required', 'integer', 'min:1', 'max:100'],
-            'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
+            'amount' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,2})?$/', 'required_without_all:min_amount,max_amount'],
+            'min_amount' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,2})?$/', 'required_with:max_amount'],
+            'max_amount' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,2})?$/', 'required_with:min_amount'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
         ]);
@@ -202,12 +204,7 @@ class TransactionController extends Controller
 
             $accounts = Account::query()->whereIn('user_id', $customerIds)->orderBy('id')->lockForUpdate()->get();
 
-            $amount = Money::toCents($data['amount']);
-            $total = $amount * $data['count'];
-
-            if ($data['transaction_type'] === 'Debit' && $accounts->contains(fn (Account $account) => $total > Money::toCents($account->balance))) {
-                throw ValidationException::withMessages(['amount' => 'The generated debits exceed the account balance.']);
-            }
+            [$minimumAmount, $maximumAmount] = $this->generatedAmountRange($data);
 
             $start = Carbon::parse($data['start_date'])->startOfDay();
             $end = Carbon::parse($data['end_date'])->endOfDay();
@@ -217,8 +214,14 @@ class TransactionController extends Controller
 
             foreach ($accounts as $account) {
                 $balance = Money::toCents($account->balance);
+                $amounts = $this->randomAmounts($minimumAmount, $maximumAmount, $data['count']);
+                $total = array_sum($amounts);
 
-                for ($index = 0; $index < $data['count']; $index++) {
+                if ($data['transaction_type'] === 'Debit' && $total > $balance) {
+                    throw ValidationException::withMessages(['min_amount' => 'The generated debits exceed the account balance.']);
+                }
+
+                foreach ($amounts as $index => $amount) {
                     $slotStart = intdiv($seconds * $index, $data['count']);
                     $slotEnd = intdiv($seconds * ($index + 1), $data['count']);
                     $at = $start->copy()->addSeconds(random_int($slotStart, max($slotStart, $slotEnd - 1)));
@@ -237,5 +240,57 @@ class TransactionController extends Controller
         });
 
         return back();
+    }
+
+    /** @return array{int, int} */
+    private function generatedAmountRange(array $data): array
+    {
+        if (isset($data['min_amount'], $data['max_amount'])) {
+            $minimum = Money::toCents($data['min_amount']);
+            $maximum = Money::toCents($data['max_amount']);
+
+            if ($minimum < 100 || $maximum > 10_000_000) {
+                throw ValidationException::withMessages(['min_amount' => 'Each transaction amount must be between $1.00 and $100,000.00.']);
+            }
+
+            if ($minimum > $maximum) {
+                throw ValidationException::withMessages(['max_amount' => 'Maximum amount must be greater than or equal to minimum amount.']);
+            }
+
+            if ($data['count'] > 1 && $minimum === $maximum) {
+                throw ValidationException::withMessages(['max_amount' => 'Choose a range so each generated transaction can have a different amount.']);
+            }
+
+            return [$minimum, $maximum];
+        }
+
+        $maximum = Money::toCents($data['amount']);
+        if ($maximum < 100 || $maximum > 10_000_000) {
+            throw ValidationException::withMessages(['amount' => 'Each transaction amount must be between $1.00 and $100,000.00.']);
+        }
+
+        return [100, $maximum];
+    }
+
+    /** @return list<int> */
+    private function randomAmounts(int $minimum, int $maximum, int $count): array
+    {
+        if ($minimum === $maximum) {
+            return array_fill(0, $count, $minimum);
+        }
+
+        if (($maximum - $minimum + 1) < $count) {
+            throw ValidationException::withMessages(['max_amount' => 'Choose a wider amount range to create a different amount for every transaction.']);
+        }
+
+        $amounts = [];
+        while (count($amounts) < $count) {
+            $amount = random_int($minimum, $maximum);
+            if (! in_array($amount, $amounts, true)) {
+                $amounts[] = $amount;
+            }
+        }
+
+        return $amounts;
     }
 }
