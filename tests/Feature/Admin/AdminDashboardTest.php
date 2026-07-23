@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Models\Transfer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -395,6 +396,41 @@ class AdminDashboardTest extends TestCase
                 ->where('transaction.amount', '40.00')
                 ->where('transaction.status', 'completed')
             );
+    }
+
+    public function test_admin_can_edit_a_customer_transfer_amount_and_description_safely(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create();
+        $source = Account::factory()->for($customer)->create(['name' => 'Source', 'balance' => '899.20']);
+        $destination = Account::factory()->for($customer)->create(['name' => 'Destination', 'balance' => '100.00']);
+        $transfer = Transfer::query()->create([
+            'user_id' => $customer->id,
+            'source_account_id' => $source->id,
+            'destination_account_id' => $destination->id,
+            'transfer_type' => 'internal',
+            'status' => 'completed',
+            'amount' => '100.00',
+            'fee_amount' => '0.80',
+            'currency' => 'USD',
+            'description' => 'Original transfer',
+        ]);
+        $sourceTransaction = Transaction::factory()->for($source)->create(['transfer_id' => $transfer->id, 'transaction_type' => 'Debit', 'amount' => '100.80']);
+        $destinationTransaction = Transaction::factory()->for($destination)->create(['transfer_id' => $transfer->id, 'transaction_type' => 'Credit', 'amount' => '100.00']);
+
+        $this->actingAs($customer)
+            ->patch(route('admin.transfers.update', $transfer), ['amount' => '150.00', 'description' => 'Corrected transfer'])
+            ->assertRedirect(route('admin.login'));
+
+        $this->actingAs($admin)
+            ->patch(route('admin.transfers.update', $transfer), ['amount' => '150.00', 'description' => 'Corrected transfer'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('transfers', ['id' => $transfer->id, 'amount' => '150.00', 'fee_amount' => '1.20', 'description' => 'Corrected transfer']);
+        $this->assertSame('848.80', (string) $source->fresh()->balance);
+        $this->assertSame('150.00', (string) $destination->fresh()->balance);
+        $this->assertDatabaseHas('transactions', ['id' => $sourceTransaction->id, 'amount' => '151.20', 'description' => 'Corrected transfer (includes fee)']);
+        $this->assertDatabaseHas('transactions', ['id' => $destinationTransaction->id, 'amount' => '150.00', 'description' => 'Corrected transfer']);
     }
 
     public function test_customer_cannot_list_admin_users(): void
