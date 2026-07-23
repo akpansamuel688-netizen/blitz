@@ -16,7 +16,7 @@ class EnsureUserIsAdmin
         $user = $request->user();
 
         if (! $user || ! $user->isAdmin()) {
-            abort(403, 'Administrator access required.');
+            return redirect()->route('admin.login');
         }
 
         return $next($request);

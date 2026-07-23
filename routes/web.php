@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
+use App\Http\Controllers\Admin\AuthenticatedAdminController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\TransferController as AdminTransferController;
@@ -18,6 +19,9 @@ use App\Http\Controllers\Banking\TransferController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+Route::get('admin/login', [AuthenticatedAdminController::class, 'create'])->name('admin.login');
+Route::post('admin/login', [AuthenticatedAdminController::class, 'store'])->name('admin.login.store');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -51,17 +55,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('savings-goals', [SavingsGoalController::class, 'index'])->name('savings-goals.index');
     Route::post('savings-goals', [SavingsGoalController::class, 'store'])->name('savings-goals.store');
 
-    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
-        Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
-        Route::get('/accounts', [AdminAccountController::class, 'index'])->name('accounts.index');
-        Route::get('/transfers', [AdminTransferController::class, 'index'])->name('transfers.index');
-        Route::patch('/transfers/{transfer}', [AdminTransferController::class, 'update'])->name('transfers.update');
-        Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
-        Route::patch('/transactions/{transaction}', [AdminTransactionController::class, 'update'])->name('transactions.update');
-        Route::post('/transactions/generate', [AdminTransactionController::class, 'generate'])->name('transactions.generate');
-    });
+});
+
+Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
+    Route::get('/accounts', [AdminAccountController::class, 'index'])->name('accounts.index');
+    Route::get('/transfers', [AdminTransferController::class, 'index'])->name('transfers.index');
+    Route::patch('/transfers/{transfer}', [AdminTransferController::class, 'update'])->name('transfers.update');
+    Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
+    Route::patch('/transactions/{transaction}', [AdminTransactionController::class, 'update'])->name('transactions.update');
+    Route::post('/transactions/generate', [AdminTransactionController::class, 'generate'])->name('transactions.generate');
 });
 
 require __DIR__.'/settings.php';

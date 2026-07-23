@@ -15,7 +15,7 @@ class AdminDashboardTest extends TestCase
     public function test_guests_cannot_access_admin_dashboard(): void
     {
         $this->get(route('admin.dashboard'))
-            ->assertRedirect(route('login'));
+            ->assertRedirect(route('admin.login'));
     }
 
     public function test_non_admin_users_are_forbidden(): void
@@ -24,7 +24,33 @@ class AdminDashboardTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('admin.dashboard'))
-            ->assertForbidden();
+            ->assertRedirect(route('admin.login'));
+    }
+
+    public function test_admin_can_sign_in_from_the_standalone_admin_login(): void
+    {
+        $admin = User::factory()->admin()->create(['email' => 'admin@example.com']);
+
+        $this->post(route('admin.login.store'), [
+            'email' => $admin->email,
+            'password' => 'password',
+        ])
+            ->assertRedirect(route('admin.dashboard'));
+
+        $this->assertAuthenticatedAs($admin);
+    }
+
+    public function test_customer_cannot_sign_in_to_the_admin_console(): void
+    {
+        $customer = User::factory()->create(['email' => 'customer@example.com']);
+
+        $this->post(route('admin.login.store'), [
+            'email' => $customer->email,
+            'password' => 'password',
+        ])
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
     }
 
     public function test_admin_can_view_platform_console(): void
@@ -148,6 +174,6 @@ class AdminDashboardTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('admin.users.index'))
-            ->assertForbidden();
+            ->assertRedirect(route('admin.login'));
     }
 }
