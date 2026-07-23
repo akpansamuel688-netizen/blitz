@@ -250,6 +250,27 @@ class AdminDashboardTest extends TestCase
         $this->assertSame('240.00', (string) $secondAccount->fresh()->balance);
     }
 
+    public function test_admin_can_generate_transactions_for_a_customer_without_an_account(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create(['is_admin' => false]);
+
+        $this->actingAs($admin)
+            ->post(route('admin.transactions.generate'), [
+                'user_ids' => [$customer->id],
+                'transaction_type' => 'Credit',
+                'count' => 1,
+                'amount' => '50.00',
+                'start_date' => '2026-07-01',
+                'end_date' => '2026-07-01',
+            ])
+            ->assertRedirect();
+
+        $account = Account::query()->where('user_id', $customer->id)->firstOrFail();
+        $this->assertSame('50.00', (string) $account->balance);
+        $this->assertDatabaseHas('transactions', ['account_id' => $account->id, 'amount' => '50.00']);
+    }
+
     public function test_customer_cannot_list_admin_users(): void
     {
         $user = User::factory()->create();

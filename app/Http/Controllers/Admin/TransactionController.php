@@ -31,7 +31,7 @@ class TransactionController extends Controller
     public function index(): Response
     {
         return Inertia::render('admin/transactions', [
-            'customers' => User::query()->where('is_admin', false)->has('accounts')->withCount('accounts')->orderBy('name')->get()->map(fn (User $user) => [
+            'customers' => User::query()->where('is_admin', false)->withCount('accounts')->orderBy('name')->get()->map(fn (User $user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
@@ -66,11 +66,28 @@ class TransactionController extends Controller
         ]);
 
         DB::transaction(function () use ($data): void {
-            $accounts = Account::query()->whereIn('user_id', $data['user_ids'])->orderBy('id')->lockForUpdate()->get();
+            $selectedUserIds = array_values(array_unique($data['user_ids']));
+            $customerIds = User::query()->whereIn('id', $selectedUserIds)->where('is_admin', false)->pluck('id')->all();
 
-            if ($accounts->isEmpty()) {
-                throw ValidationException::withMessages(['user_ids' => 'Select at least one customer with an account.']);
+            if (count($customerIds) !== count($selectedUserIds)) {
+                throw ValidationException::withMessages(['user_ids' => 'Only customer accounts can receive generated transactions.']);
             }
+
+            $usersWithAccounts = Account::query()->whereIn('user_id', $customerIds)->distinct()->pluck('user_id')->all();
+
+            foreach (array_diff($customerIds, $usersWithAccounts) as $userId) {
+                Account::query()->firstOrCreate(
+                    ['user_id' => $userId, 'name' => 'Everyday Checking'],
+                    [
+                        'account_number' => 'TEST'.str_pad((string) $userId, 8, '0', STR_PAD_LEFT),
+                        'type' => 'Checking',
+                        'currency' => 'USD',
+                        'balance' => 0,
+                    ],
+                );
+            }
+
+            $accounts = Account::query()->whereIn('user_id', $customerIds)->orderBy('id')->lockForUpdate()->get();
 
             $amount = Money::toCents($data['amount']);
             $total = $amount * $data['count'];
