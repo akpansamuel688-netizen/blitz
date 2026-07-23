@@ -1,9 +1,8 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     ArrowDownLeft,
     ArrowRight,
     ArrowUpRight,
-    LayoutGrid,
     ListChecks,
     Plus,
     Sparkles,
@@ -18,7 +17,6 @@ import type { ActivityDay, DashboardAccount, DashboardTransaction, UserDashboard
 import { formatCurrency, formatDateTime, maskAccountNumber } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import accounts from '@/routes/accounts';
-import admin from '@/routes/admin';
 import { dashboard } from '@/routes';
 import transactions from '@/routes/transactions';
 
@@ -47,13 +45,11 @@ export default function Dashboard({
     activityByDay,
     userName,
 }: Props) {
-    const { auth } = usePage().props;
     const firstName = userName.split(' ')[0] || userName;
     const greeting = greetingForHour(new Date().getHours());
     const maxBar = Math.max(
         ...activityByDay.flatMap((day) => [Number(day.credits), Number(day.debits), 1]),
     );
-    const netPositive = Number(stats.netFlow) >= 0;
 
     return (
         <>
@@ -88,7 +84,7 @@ export default function Dashboard({
                 </div>
 
                 {/* KPI strip */}
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <Card className="relative overflow-hidden border-brand/20 bg-gradient-to-br from-brand-subtle to-card shadow-sm">
                         <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
@@ -146,38 +142,6 @@ export default function Dashboard({
                     </Card>
                     </Link>
 
-                    <Card className="border shadow-sm">
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center justify-between">
-                                <CardDescription>Net flow · 30 days</CardDescription>
-                                <span
-                                    className={cn(
-                                        'flex size-9 items-center justify-center rounded-lg',
-                                        netPositive
-                                            ? 'bg-brand/10 text-brand'
-                                            : 'bg-rose-500/10 text-rose-600',
-                                    )}
-                                >
-                                    <LayoutGrid className="size-4" />
-                                </span>
-                            </div>
-                            <CardTitle
-                                className={cn(
-                                    'text-3xl font-semibold tracking-tight',
-                                    netPositive ? 'text-brand' : 'text-rose-600 dark:text-rose-400',
-                                )}
-                            >
-                                {netPositive ? '+' : ''}
-                                {formatCurrency(stats.netFlow)}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-xs text-muted-foreground">
-                                {stats.transactionCount30d} transaction
-                                {stats.transactionCount30d === 1 ? '' : 's'} this month
-                            </p>
-                        </CardContent>
-                    </Card>
                 </div>
 
                 <div className="grid gap-6 xl:grid-cols-5">
@@ -312,8 +276,8 @@ export default function Dashboard({
                 </div>
 
                 {/* Recent transactions + quick actions */}
-                <div className="grid gap-6 lg:grid-cols-3">
-                    <Card className="border shadow-sm lg:col-span-2">
+                <div>
+                    <Card className="border shadow-sm">
                         <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                             <div>
                                 <CardTitle>Recent transactions</CardTitle>
@@ -382,46 +346,6 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
 
-                    <Card className="border border-brand/15 bg-gradient-to-b from-brand-subtle/80 to-card shadow-sm">
-                        <CardHeader>
-                            <CardTitle>Quick actions</CardTitle>
-                            <CardDescription>Common banking tasks.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="grid gap-2">
-                            <Button className="justify-start" variant="secondary" asChild>
-                                <Link href={accounts.index()}>
-                                    <Plus className="size-4" />
-                                    Open a new account
-                                </Link>
-                            </Button>
-                            <Button className="justify-start" variant="secondary" asChild>
-                                <Link
-                                    href={
-                                        userAccounts[0]
-                                            ? accounts.show(userAccounts[0].id)
-                                            : accounts.index()
-                                    }
-                                >
-                                    <ArrowRight className="size-4" />
-                                    Transfer between accounts
-                                </Link>
-                            </Button>
-                            <Button className="justify-start" variant="secondary" asChild>
-                                <Link href={transactions.index()}>
-                                    <ListChecks className="size-4" />
-                                    Review transaction history
-                                </Link>
-                            </Button>
-                            {auth.isAdmin && (
-                                <Button className="justify-start" asChild>
-                                    <Link href={admin.dashboard()}>
-                                        <LayoutGrid className="size-4" />
-                                        Open admin console
-                                    </Link>
-                                </Button>
-                            )}
-                        </CardContent>
-                    </Card>
                 </div>
             </div>
         </>
