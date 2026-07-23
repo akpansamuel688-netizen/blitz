@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  */
-#[Fillable(['account_id', 'transfer_id', 'category_id', 'transaction_type', 'amount', 'description'])]
+#[Fillable(['account_id', 'transfer_id', 'category_id', 'transaction_type', 'status', 'amount', 'description'])]
 class Transaction extends Model
 {
     /** @use HasFactory<TransactionFactory> */
@@ -42,5 +43,10 @@ class Transaction extends Model
     public function transfer(): BelongsTo
     {
         return $this->belongsTo(Transfer::class);
+    }
+
+    public function editAudits(): HasMany
+    {
+        return $this->hasMany(TransactionEditAudit::class);
     }
 }

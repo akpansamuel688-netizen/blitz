@@ -71,7 +71,9 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/transfers', [AdminTransferController::class, 'index'])->name('transfers.index');
     Route::patch('/transfers/{transfer}', [AdminTransferController::class, 'update'])->name('transfers.update');
     Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/{transaction}', [AdminTransactionController::class, 'show'])->name('transactions.show');
     Route::patch('/transactions/{transaction}', [AdminTransactionController::class, 'update'])->name('transactions.update');
+    Route::patch('/transactions/{transaction}/financial', [AdminTransactionController::class, 'updateFinancial'])->name('transactions.financial.update');
     Route::post('/transactions/generate', [AdminTransactionController::class, 'generate'])->name('transactions.generate');
 });
 

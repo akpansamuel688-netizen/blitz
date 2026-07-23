@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { formatCurrency, formatDateTime } from '@/lib/money';
 
 type Customer = { id: number; name: string; email: string; accounts_count: number };
-type Transaction = { id: number; type: string; amount: string; description: string | null; account_name: string; created_at: string | null };
+type Transaction = { id: number; type: string; amount: string; description: string | null; account_name: string; status: string; created_at: string | null };
 
 function LegacyTransactionManager({ customers, transactions }: { customers: Customer[]; transactions: Transaction[] }) {
     return <div className="space-y-6">
@@ -25,7 +25,7 @@ function LegacyTransactionManager({ customers, transactions }: { customers: Cust
                 </>}</Form>
             </CardContent>
         </Card>
-        <Card><CardHeader><CardTitle>Recent ledger activity</CardTitle></CardHeader><CardContent><div className="grid gap-3">{transactions.map((transaction) => <div key={transaction.id} className="rounded-xl border p-3"><div className="flex justify-between gap-4"><div><p className="font-medium">{transaction.description ?? 'Transaction'}</p><p className="text-sm text-muted-foreground">{transaction.type} · {transaction.account_name} · {formatDateTime(transaction.created_at)}</p></div><p className="font-semibold">{formatCurrency(transaction.amount)}</p></div><Form action={`/admin/transactions/${transaction.id}`} method="patch" className="mt-3 flex gap-2">{({ processing }) => <><Input name="description" defaultValue={transaction.description ?? ''} aria-label="Transaction description" /><Button size="sm" variant="outline" disabled={processing}>Save</Button></>}</Form></div>)}</div></CardContent></Card>
+        <Card><CardHeader><CardTitle>Recent ledger activity</CardTitle></CardHeader><CardContent><div className="grid gap-3">{transactions.map((transaction) => <div key={transaction.id} className="rounded-xl border p-3"><div className="flex justify-between gap-4"><div><p className="font-medium">{transaction.description ?? 'Transaction'}</p><p className="text-sm text-muted-foreground">{transaction.type} · {transaction.account_name} · {transaction.status} · {formatDateTime(transaction.created_at)}</p></div><p className="font-semibold">{formatCurrency(transaction.amount)}</p></div><div className="mt-3"><Button size="sm" variant="outline" asChild><Link href={`/admin/transactions/${transaction.id}`}>View & edit</Link></Button></div></div>)}</div></CardContent></Card>
     </div>;
 }
 

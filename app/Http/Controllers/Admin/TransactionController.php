@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Models\TransactionEditAudit;
 use App\Models\User;
 use App\Support\Money;
 use Carbon\Carbon;
@@ -17,6 +18,7 @@ use Inertia\Response;
 
 class TransactionController extends Controller
 {
+    public const STATUSES = ['pending', 'processing', 'completed', 'failed', 'cancelled', 'reversed'];
     private const GENERATED_PAYMENT_DESCRIPTIONS = [
         'Entertainment',
         'Food',
@@ -40,7 +42,37 @@ class TransactionController extends Controller
             'transactions' => Transaction::query()->with('account:id,name,user_id')->latest()->limit(100)->get()->map(fn (Transaction $transaction) => [
                 'id' => $transaction->id, 'type' => $transaction->transaction_type, 'amount' => Money::format($transaction->amount),
                 'description' => $transaction->description, 'account_name' => $transaction->account?->name ?? 'Account',
+                'status' => $transaction->status,
                 'created_at' => $transaction->created_at?->toIso8601String(),
+            ]),
+        ]);
+    }
+
+    public function show(Transaction $transaction): Response
+    {
+        $transaction->load(['account.user:id,name,email', 'editAudits.admin:id,name']);
+
+        return Inertia::render('admin/transactions/show', [
+            'transaction' => [
+                'id' => $transaction->id,
+                'customer_name' => $transaction->account?->user?->name ?? 'Customer',
+                'account_name' => $transaction->account?->name ?? 'Account',
+                'currency' => $transaction->account?->currency ?? 'USD',
+                'type' => $transaction->transaction_type,
+                'description' => $transaction->description,
+                'amount' => number_format((float) $transaction->amount, 2, '.', ''),
+                'status' => $transaction->status,
+                'created_at' => $transaction->created_at?->toIso8601String(),
+                'is_transfer_linked' => $transaction->transfer_id !== null,
+            ],
+            'statuses' => self::STATUSES,
+            'audits' => $transaction->editAudits->sortByDesc('created_at')->values()->map(fn (TransactionEditAudit $audit) => [
+                'id' => $audit->id,
+                'admin_name' => $audit->admin?->name ?? 'Administrator',
+                'previous_values' => $audit->previous_values,
+                'new_values' => $audit->new_values,
+                'reason' => $audit->reason,
+                'created_at' => $audit->created_at?->toIso8601String(),
             ]),
         ]);
     }
@@ -51,6 +83,87 @@ class TransactionController extends Controller
         $transaction->update($data);
 
         return back();
+    }
+
+    public function updateFinancial(Request $request, Transaction $transaction): RedirectResponse
+    {
+        $data = $request->validate([
+            'date' => ['required', 'date_format:Y-m-d'],
+            'time' => ['required', 'date_format:H:i'],
+            'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
+            'status' => ['required', 'in:'.implode(',', self::STATUSES)],
+            'reason' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        $newTimestamp = Carbon::createFromFormat('Y-m-d H:i', $data['date'].' '.$data['time']);
+        $newAmount = Money::toCents($data['amount']);
+
+        if ($newAmount <= 0) {
+            throw ValidationException::withMessages(['amount' => 'The amount must be greater than zero.']);
+        }
+
+        DB::transaction(function () use ($transaction, $request, $data, $newTimestamp, $newAmount): void {
+            $lockedTransaction = Transaction::query()->lockForUpdate()->findOrFail($transaction->id);
+            $account = Account::query()->lockForUpdate()->findOrFail($lockedTransaction->account_id);
+            $oldAmount = Money::toCents($lockedTransaction->amount);
+            $oldStatus = $lockedTransaction->status;
+
+            if ($lockedTransaction->transfer_id && ($oldAmount !== $newAmount || $oldStatus !== $data['status'])) {
+                throw ValidationException::withMessages(['amount' => 'Transfer-linked amounts and statuses are managed by the transfer ledger and cannot be edited independently.']);
+            }
+
+            $oldEffect = $this->balanceEffect($lockedTransaction->transaction_type, $oldAmount, $oldStatus);
+            $newEffect = $this->balanceEffect($lockedTransaction->transaction_type, $newAmount, $data['status']);
+            $newBalance = Money::toCents($account->balance) + ($newEffect - $oldEffect);
+
+            if ($newBalance < 0) {
+                throw ValidationException::withMessages(['amount' => 'This change would make the account balance negative.']);
+            }
+
+            $previousValues = [
+                'date_time' => $lockedTransaction->created_at?->toIso8601String(),
+                'amount' => Money::fromCents($oldAmount),
+                'status' => $oldStatus,
+            ];
+            $newValues = [
+                'date_time' => $newTimestamp->toIso8601String(),
+                'amount' => Money::fromCents($newAmount),
+                'status' => $data['status'],
+            ];
+
+            $lockedTransaction->forceFill([
+                'amount' => Money::fromCents($newAmount),
+                'status' => $data['status'],
+                'created_at' => $newTimestamp,
+            ])->save();
+
+            if ($newEffect !== $oldEffect) {
+                $account->update(['balance' => Money::fromCents($newBalance)]);
+            }
+
+            TransactionEditAudit::query()->create([
+                'transaction_id' => $lockedTransaction->id,
+                'admin_user_id' => $request->user()->id,
+                'previous_values' => $previousValues,
+                'new_values' => $newValues,
+                'reason' => $data['reason'],
+            ]);
+        });
+
+        return to_route('admin.transactions.show', $transaction)->with('success', 'Transaction updated and audit record saved.');
+    }
+
+    private function balanceEffect(string $type, int $amount, string $status): int
+    {
+        if ($status !== 'completed') {
+            return 0;
+        }
+
+        return match ($type) {
+            'Credit' => $amount,
+            'Debit' => -$amount,
+            default => throw ValidationException::withMessages(['amount' => 'Only Credit and Debit transactions can be financially edited.']),
+        };
     }
 
     public function generate(Request $request): RedirectResponse

@@ -29,6 +29,7 @@ class TransactionController extends Controller
                 'id' => $transaction->id,
                 'transfer_id' => $transaction->transfer_id,
                 'transaction_type' => $transaction->transaction_type,
+                'status' => $transaction->status,
                 'description' => $transaction->description,
                 'amount' => number_format($transaction->amount, 2, '.', ''),
                 'created_at' => $transaction->created_at->toDateTimeString(),
@@ -51,6 +52,7 @@ class TransactionController extends Controller
             'transaction' => [
                 'id' => $transaction->id,
                 'transaction_type' => $transaction->transaction_type,
+                'status' => $transaction->status,
                 'description' => $transaction->description,
                 'amount' => Money::format($transaction->amount),
                 'created_at' => $transaction->created_at?->toIso8601String(),
