@@ -56,4 +56,34 @@ class DashboardTest extends TestCase
             ->where('userName', $user->name)
         );
     }
+
+    public function test_dashboard_money_totals_include_completed_admin_style_ledger_entries_from_any_date(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create();
+        Transaction::factory()->for($account)->create([
+            'transaction_type' => 'Credit',
+            'status' => 'completed',
+            'amount' => 125,
+            'created_at' => now()->subMonths(6),
+        ]);
+        Transaction::factory()->for($account)->create([
+            'transaction_type' => 'Debit',
+            'status' => 'completed',
+            'amount' => 30,
+            'created_at' => now()->subMonths(5),
+        ]);
+        Transaction::factory()->for($account)->create([
+            'transaction_type' => 'Credit',
+            'status' => 'failed',
+            'amount' => 999,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertInertia(fn ($page) => $page
+                ->where('stats.moneyIn', '125.00')
+                ->where('stats.moneyOut', '30.00')
+            );
+    }
 }

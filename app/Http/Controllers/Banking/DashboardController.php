@@ -31,11 +31,16 @@ class DashboardController extends Controller
             ->where('created_at', '>=', $since)
             ->get();
 
-        $moneyIn = (float) $periodTransactions
+        $completedTransactions = Transaction::query()
+            ->whereIn('account_id', $accountIds)
+            ->where('status', 'completed')
+            ->get();
+
+        $moneyIn = (float) $completedTransactions
             ->where('transaction_type', 'Credit')
             ->sum('amount');
 
-        $moneyOut = (float) $periodTransactions
+        $moneyOut = (float) $completedTransactions
             ->where('transaction_type', 'Debit')
             ->sum('amount');
 

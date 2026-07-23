@@ -108,7 +108,7 @@ export default function Dashboard({
                     <Card className="border shadow-sm transition-all hover:border-emerald-500/50 hover:shadow-md">
                         <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
-                                <CardDescription>Money in · 30 days</CardDescription>
+                                <CardDescription>Money in · all time</CardDescription>
                                 <span className="flex size-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                                     <TrendingUp className="size-4" />
                                 </span>
@@ -127,7 +127,7 @@ export default function Dashboard({
                     <Card className="border shadow-sm transition-all hover:border-rose-500/50 hover:shadow-md">
                         <CardHeader className="pb-2">
                             <div className="flex items-center justify-between">
-                                <CardDescription>Money out · 30 days</CardDescription>
+                                <CardDescription>Money out · all time</CardDescription>
                                 <span className="flex size-9 items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">
                                     <TrendingDown className="size-4" />
                                 </span>
