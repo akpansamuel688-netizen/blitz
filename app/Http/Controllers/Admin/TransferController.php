@@ -55,6 +55,7 @@ class TransferController extends Controller
         $data = $request->validate([
             'description' => ['nullable', 'string', 'max:255'],
             'amount' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,2})?$/'],
+            'status' => ['nullable', 'in:failed,completed'],
             'recipient_name' => ['nullable', 'string', 'max:150'],
             'bank_name' => ['nullable', 'string', 'max:150'],
             'recipient_account_number' => ['nullable', 'string', 'max:34'],
@@ -62,24 +63,21 @@ class TransferController extends Controller
             'swift_bic' => ['nullable', 'string', 'max:11'],
         ]);
 
-        if (! array_key_exists('amount', $data)) {
+        if (! array_key_exists('amount', $data) && ! array_key_exists('status', $data)) {
             $transfer->update($data);
 
             return back();
         }
 
-        $newAmount = Money::toCents($data['amount']);
+        $newAmount = array_key_exists('amount', $data) ? Money::toCents($data['amount']) : null;
 
-        if ($newAmount <= 0) {
+        if ($newAmount !== null && $newAmount <= 0) {
             throw ValidationException::withMessages(['amount' => 'The transfer amount must be greater than zero.']);
         }
 
         DB::transaction(function () use ($transfer, $data, $newAmount): void {
             $lockedTransfer = Transfer::query()->lockForUpdate()->findOrFail($transfer->id);
-
-            if ($lockedTransfer->status !== 'completed') {
-                throw ValidationException::withMessages(['amount' => 'Only completed transfers can be financially corrected.']);
-            }
+            $newStatus = $data['status'] ?? $lockedTransfer->status;
 
             $accountIds = array_filter([$lockedTransfer->source_account_id, $lockedTransfer->destination_account_id]);
             $accounts = Account::query()->whereIn('id', $accountIds)->orderBy('id')->lockForUpdate()->get()->keyBy('id');
@@ -92,21 +90,40 @@ class TransferController extends Controller
 
             $oldAmount = Money::toCents($lockedTransfer->amount);
             $oldFee = Money::toCents($lockedTransfer->fee_amount);
+            $newAmount ??= $oldAmount;
             $newFee = intdiv(($newAmount * 8) + 500, 1000);
-            $sourceDifference = ($newAmount + $newFee) - ($oldAmount + $oldFee);
-            $newSourceBalance = Money::toCents($source->balance) - $sourceDifference;
 
-            if ($newSourceBalance < 0) {
-                throw ValidationException::withMessages(['amount' => 'The customer does not have sufficient funds for this corrected transfer amount.']);
+            if ($newStatus !== $lockedTransfer->status && $newAmount !== $oldAmount) {
+                throw ValidationException::withMessages(['amount' => 'Save an amount correction separately from a transfer status change.']);
             }
 
-            $newDestinationBalance = null;
-            if ($destination) {
-                $newDestinationBalance = Money::toCents($destination->balance) + ($newAmount - $oldAmount);
+            if ($lockedTransfer->status !== 'completed' && $newAmount !== $oldAmount) {
+                throw ValidationException::withMessages(['amount' => 'Only completed transfers can have their amount corrected.']);
+            }
 
-                if ($newDestinationBalance < 0) {
-                    throw ValidationException::withMessages(['amount' => 'Reducing this internal transfer would make the destination balance negative.']);
-                }
+            $sourceDifference = ($newAmount + $newFee) - ($oldAmount + $oldFee);
+            $sourceBalance = Money::toCents($source->balance);
+            $destinationBalance = $destination ? Money::toCents($destination->balance) : null;
+            $newSourceBalance = $sourceBalance;
+            $newDestinationBalance = $destinationBalance;
+
+            if ($lockedTransfer->status === 'completed' && $newStatus === 'failed') {
+                $newSourceBalance += $oldAmount + $oldFee;
+                $newDestinationBalance = $destination ? $destinationBalance - $oldAmount : null;
+            } elseif ($lockedTransfer->status !== 'completed' && $newStatus === 'completed') {
+                $newSourceBalance -= $oldAmount + $oldFee;
+                $newDestinationBalance = $destination ? $destinationBalance + $oldAmount : null;
+            } elseif ($lockedTransfer->status === 'completed') {
+                $newSourceBalance -= $sourceDifference;
+                $newDestinationBalance = $destination ? $destinationBalance + ($newAmount - $oldAmount) : null;
+            }
+
+            if ($newSourceBalance < 0) {
+                throw ValidationException::withMessages(['amount' => 'The customer does not have sufficient funds for this transfer change.']);
+            }
+
+            if ($destination && $newDestinationBalance < 0) {
+                throw ValidationException::withMessages(['status' => 'Failing this internal transfer would make the destination balance negative.']);
             }
 
             $transactions = Transaction::query()->where('transfer_id', $lockedTransfer->id)->lockForUpdate()->get()->keyBy('account_id');
@@ -122,10 +139,13 @@ class TransferController extends Controller
                 ...$data,
                 'amount' => Money::fromCents($newAmount),
                 'fee_amount' => Money::fromCents($newFee),
+                'status' => $newStatus,
+                'completed_at' => $newStatus === 'completed' ? ($lockedTransfer->completed_at ?? now()) : null,
             ]);
             $source->update(['balance' => Money::fromCents($newSourceBalance)]);
             $sourceTransaction->update([
                 'amount' => Money::fromCents($newAmount + $newFee),
+                'status' => $newStatus === 'completed' ? 'completed' : 'failed',
                 'description' => $this->sourceDescription($lockedTransfer, $description, $destination),
             ]);
 
@@ -133,12 +153,13 @@ class TransferController extends Controller
                 $destination->update(['balance' => Money::fromCents($newDestinationBalance)]);
                 $destinationTransaction->update([
                     'amount' => Money::fromCents($newAmount),
+                    'status' => $newStatus === 'completed' ? 'completed' : 'failed',
                     'description' => $description ?: 'Internal transfer from '.$source->name,
                 ]);
             }
         });
 
-        return back()->with('success', 'Transfer amount, fee, and linked balances were updated.');
+        return back()->with('success', 'Transfer changes and linked balances were updated.');
     }
 
     private function sourceDescription(Transfer $transfer, ?string $description, ?Account $destination): string

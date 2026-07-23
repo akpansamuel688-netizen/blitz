@@ -433,6 +433,45 @@ class AdminDashboardTest extends TestCase
         $this->assertDatabaseHas('transactions', ['id' => $destinationTransaction->id, 'amount' => '150.00', 'description' => 'Corrected transfer']);
     }
 
+    public function test_admin_can_mark_a_completed_transfer_failed_and_completed_again(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create();
+        $source = Account::factory()->for($customer)->create(['balance' => '899.20']);
+        $destination = Account::factory()->for($customer)->create(['balance' => '100.00']);
+        $transfer = Transfer::query()->create([
+            'user_id' => $customer->id,
+            'source_account_id' => $source->id,
+            'destination_account_id' => $destination->id,
+            'transfer_type' => 'internal',
+            'status' => 'completed',
+            'amount' => '100.00',
+            'fee_amount' => '0.80',
+            'currency' => 'USD',
+        ]);
+        $sourceTransaction = Transaction::factory()->for($source)->create(['transfer_id' => $transfer->id, 'transaction_type' => 'Debit', 'status' => 'completed', 'amount' => '100.80']);
+        $destinationTransaction = Transaction::factory()->for($destination)->create(['transfer_id' => $transfer->id, 'transaction_type' => 'Credit', 'status' => 'completed', 'amount' => '100.00']);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.transfers.update', $transfer), ['status' => 'failed'])
+            ->assertRedirect();
+
+        $this->assertSame('failed', $transfer->fresh()->status);
+        $this->assertSame('1000.00', (string) $source->fresh()->balance);
+        $this->assertSame('0.00', (string) $destination->fresh()->balance);
+        $this->assertSame('failed', $sourceTransaction->fresh()->status);
+        $this->assertSame('failed', $destinationTransaction->fresh()->status);
+
+        $this->patch(route('admin.transfers.update', $transfer), ['status' => 'completed'])
+            ->assertRedirect();
+
+        $this->assertSame('completed', $transfer->fresh()->status);
+        $this->assertSame('899.20', (string) $source->fresh()->balance);
+        $this->assertSame('100.00', (string) $destination->fresh()->balance);
+        $this->assertSame('completed', $sourceTransaction->fresh()->status);
+        $this->assertSame('completed', $destinationTransaction->fresh()->status);
+    }
+
     public function test_customer_cannot_list_admin_users(): void
     {
         $user = User::factory()->create();
