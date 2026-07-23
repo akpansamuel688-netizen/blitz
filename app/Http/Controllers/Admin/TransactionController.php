@@ -43,6 +43,7 @@ class TransactionController extends Controller
                 'id' => $transaction->id, 'type' => $transaction->transaction_type, 'amount' => Money::format($transaction->amount),
                 'description' => $transaction->description, 'account_name' => $transaction->account?->name ?? 'Account',
                 'status' => $transaction->status,
+                'is_transfer_linked' => $transaction->transfer_id !== null,
                 'created_at' => $transaction->created_at?->toIso8601String(),
             ]),
         ]);
@@ -83,6 +84,34 @@ class TransactionController extends Controller
         $transaction->update($data);
 
         return back();
+    }
+
+    public function destroy(Transaction $transaction): RedirectResponse
+    {
+        DB::transaction(function () use ($transaction): void {
+            $lockedTransaction = Transaction::query()->lockForUpdate()->findOrFail($transaction->id);
+            abort_unless($lockedTransaction->transfer_id === null, 422, 'Transfer-linked transactions are managed in the transfer ledger.');
+
+            $account = Account::query()->lockForUpdate()->findOrFail($lockedTransaction->account_id);
+            $effect = $this->balanceEffect(
+                $lockedTransaction->transaction_type,
+                Money::toCents($lockedTransaction->amount),
+                $lockedTransaction->status,
+            );
+            $newBalance = Money::toCents($account->balance) - $effect;
+
+            if ($newBalance < 0) {
+                throw ValidationException::withMessages(['transaction' => 'This transaction cannot be deleted because its credit has already been used.']);
+            }
+
+            if ($effect !== 0) {
+                $account->update(['balance' => Money::fromCents($newBalance)]);
+            }
+
+            $lockedTransaction->delete();
+        });
+
+        return back()->with('success', 'Transaction deleted and account balance reconciled.');
     }
 
     public function updateFinancial(Request $request, Transaction $transaction): RedirectResponse

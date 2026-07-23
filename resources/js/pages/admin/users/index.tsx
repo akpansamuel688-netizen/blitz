@@ -87,7 +87,7 @@ export default function AdminUsersIndex({ users, filters, summary }: Props) {
                     </Card>
                 </div>
 
-                <Card className="border shadow-sm">
+                <Card className="hidden">
                     <CardHeader>
                         <CardTitle>Create test users</CardTitle>
                         <CardDescription>

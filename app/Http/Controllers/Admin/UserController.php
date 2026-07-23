@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -115,10 +116,22 @@ class UserController extends Controller
             return back()->with('error', 'Administrator profiles cannot be changed from the customer directory.');
         }
 
-        $data = $request->validate(['name' => ['required', 'string', 'max:100']]);
-        $user->update($data);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'password' => array_merge(['nullable'], array_slice($this->passwordRules(), 1)),
+        ]);
 
-        return back()->with('success', 'Test user updated.');
+        $user->fill(collect($data)->only(['name', 'email', 'phone', 'password'])->filter(fn ($value, $key) => $key !== 'password' || filled($value))->all());
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        return back()->with('success', 'Customer details updated.');
     }
 
     public function updateAccountBalance(Request $request, User $user, Account $account): RedirectResponse
@@ -181,6 +194,7 @@ class UserController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'phone' => $user->phone,
                 'is_admin' => $user->is_admin,
                 'accounts_count' => $user->accounts_count,
                 'total_balance' => Money::format($user->accounts_sum_balance ?? 0),

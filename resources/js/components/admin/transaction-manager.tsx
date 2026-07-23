@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { formatCurrency, formatDateTime } from '@/lib/money';
 
 type Customer = { id: number; name: string; email: string; accounts_count: number };
-type Transaction = { id: number; type: string; amount: string; description: string | null; account_name: string; status: string; created_at: string | null };
+type Transaction = { id: number; type: string; amount: string; description: string | null; account_name: string; status: string; is_transfer_linked?: boolean; created_at: string | null };
 
 function LegacyTransactionManager({ customers, transactions }: { customers: Customer[]; transactions: Transaction[] }) {
     return <div className="space-y-6">
@@ -31,6 +31,10 @@ function LegacyTransactionManager({ customers, transactions }: { customers: Cust
 
 function Field({ name, label, type = 'text', defaultValue }: { name: string; label: string; type?: string; defaultValue?: string }) { return <div className="grid gap-2"><Label htmlFor={name}>{label}</Label><Input id={name} name={name} type={type} step={type === 'number' ? '0.01' : undefined} min={type === 'number' ? '0' : undefined} defaultValue={defaultValue} required /></div>; }
 
+function LedgerDeleteActions({ transactions }: { transactions: Transaction[] }) { const deletable = transactions.filter((transaction) => !transaction.is_transfer_linked); return deletable.length === 0 ? null : <Card><CardHeader><CardTitle>Remove ledger activity</CardTitle><CardDescription>Deleting a completed entry reverses its balance effect and removes it from the customer's history.</CardDescription></CardHeader><CardContent><div className="grid gap-2">{deletable.map((transaction) => <div key={transaction.id} className="flex items-center justify-between gap-3 rounded-lg border p-3"><div className="min-w-0"><p className="truncate text-sm font-medium">{transaction.description ?? 'Transaction'}</p><p className="text-xs text-muted-foreground">{transaction.type} - {transaction.account_name} - {formatCurrency(transaction.amount)}</p></div><Form action={`/admin/transactions/${transaction.id}`} method="delete" onSubmit={(event) => { if (!window.confirm('Delete this transaction? Its effect will be reversed from the account balance.')) event.preventDefault(); }}>{({ processing }) => <Button size="sm" variant="destructive" disabled={processing}>Delete</Button>}</Form></div>)}</div></CardContent></Card>; }
+
+// Legacy transaction manager ends above.
+
 export default function TransactionManager({ customers, transactions }: { customers: Customer[]; transactions: Transaction[] }) {
     return <div className="space-y-6">
         <div><h1 className="text-2xl font-semibold">Transaction manager</h1><p className="mt-1 text-sm text-muted-foreground">Generate dated ledger activity for one or more customers and edit transaction descriptions.</p></div>
@@ -48,6 +52,7 @@ export default function TransactionManager({ customers, transactions }: { custom
                 </>}</Form>
             </CardContent>
         </Card>
+        <LedgerDeleteActions transactions={transactions} />
         <Card><CardHeader><CardTitle>Recent ledger activity</CardTitle></CardHeader><CardContent><div className="grid gap-3">{transactions.map((transaction) => <div key={transaction.id} className="rounded-xl border p-3"><div className="flex justify-between gap-4"><div><p className="font-medium">{transaction.description ?? 'Transaction'}</p><p className="text-sm text-muted-foreground">{transaction.type} · {transaction.account_name} · {formatDateTime(transaction.created_at)}</p></div><p className="font-semibold">{formatCurrency(transaction.amount)}</p></div><Form action={`/admin/transactions/${transaction.id}`} method="patch" className="mt-3 flex gap-2">{({ processing }) => <><Input name="description" defaultValue={transaction.description ?? ''} aria-label="Transaction description" /><Button size="sm" variant="outline" disabled={processing}>Save</Button></>}</Form></div>)}</div></CardContent></Card>
     </div>;
 }

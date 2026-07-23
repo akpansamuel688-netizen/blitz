@@ -24,6 +24,7 @@ type Props = {
         id: number;
         name: string;
         email: string;
+        phone: string | null;
         is_admin: boolean;
         email_verified_at: string | null;
         created_at: string | null;
@@ -92,18 +93,38 @@ export default function AdminUserShow({ user, accounts, transactions }: Props) {
                 {!user.is_admin && (
                     <Card className="border shadow-sm">
                         <CardHeader>
-                            <CardTitle>Edit test user</CardTitle>
-                            <CardDescription>Update the customer name and manage balances on their accounts below.</CardDescription>
+                            <CardTitle>Edit customer</CardTitle>
+                            <CardDescription>Update customer contact details, reset their password, and manage account balances.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Form action={`/admin/users/${user.id}`} method="patch" className="flex max-w-xl flex-col gap-3 sm:flex-row sm:items-end">
+                            <Form action={`/admin/users/${user.id}`} method="patch" className="grid max-w-2xl gap-4 sm:grid-cols-2">
                                 {({ processing, errors }) => <>
-                                    <div className="grid flex-1 gap-2">
+                                    <div className="grid gap-2">
                                         <label htmlFor="name" className="text-sm font-medium">Name</label>
                                         <Input id="name" name="name" defaultValue={user.name} required />
                                         <p className="text-xs text-destructive">{errors.name}</p>
                                     </div>
-                                    <Button disabled={processing}>Save name</Button>
+                                    <div className="grid gap-2">
+                                        <label htmlFor="email" className="text-sm font-medium">Email address</label>
+                                        <Input id="email" name="email" type="email" defaultValue={user.email} required />
+                                        <p className="text-xs text-destructive">{errors.email}</p>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <label htmlFor="phone" className="text-sm font-medium">Phone number</label>
+                                        <Input id="phone" name="phone" type="tel" defaultValue={user.phone ?? ''} />
+                                        <p className="text-xs text-destructive">{errors.phone}</p>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <label htmlFor="password" className="text-sm font-medium">New password</label>
+                                        <Input id="password" name="password" type="password" autoComplete="new-password" placeholder="Leave blank to keep current password" />
+                                        <p className="text-xs text-muted-foreground">Existing passwords are securely hashed and cannot be revealed.</p>
+                                        <p className="text-xs text-destructive">{errors.password}</p>
+                                    </div>
+                                    <div className="grid gap-2 sm:col-span-2">
+                                        <label htmlFor="password_confirmation" className="text-sm font-medium">Confirm new password</label>
+                                        <Input id="password_confirmation" name="password_confirmation" type="password" autoComplete="new-password" />
+                                    </div>
+                                    <div className="sm:col-span-2"><Button disabled={processing}>{processing ? 'Saving...' : 'Save customer changes'}</Button></div>
                                 </>}
                             </Form>
                         </CardContent>

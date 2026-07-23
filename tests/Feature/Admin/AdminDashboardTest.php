@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AdminDashboardTest extends TestCase
@@ -170,6 +171,46 @@ class AdminDashboardTest extends TestCase
             'amount' => '150.25',
             'description' => 'Admin balance adjustment',
         ]);
+    }
+
+    public function test_admin_can_update_customer_email_phone_and_reset_password_without_exposing_it(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create([
+            'email' => 'before@example.test',
+            'phone' => '+1 555 010 0000',
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.update', $customer), [
+                'name' => 'Updated Customer',
+                'email' => 'after@example.test',
+                'phone' => '+1 555 010 9999',
+                'password' => 'NewSecurePassword123!',
+                'password_confirmation' => 'NewSecurePassword123!',
+            ])
+            ->assertRedirect();
+
+        $customer->refresh();
+        $this->assertSame('Updated Customer', $customer->name);
+        $this->assertSame('after@example.test', $customer->email);
+        $this->assertSame('+1 555 010 9999', $customer->phone);
+        $this->assertNull($customer->email_verified_at);
+        $this->assertTrue(Hash::check('NewSecurePassword123!', $customer->password));
+        $this->assertNotSame('NewSecurePassword123!', $customer->password);
+    }
+
+    public function test_customer_cannot_update_another_customer_from_admin_routes(): void
+    {
+        $customer = User::factory()->create();
+        $otherCustomer = User::factory()->create();
+
+        $this->actingAs($customer)
+            ->patch(route('admin.users.update', $otherCustomer), ['name' => 'Attempted change'])
+            ->assertRedirect(route('admin.login'));
+
+        $this->assertNotSame('Attempted change', $otherCustomer->fresh()->name);
     }
 
     public function test_admin_can_delete_a_test_user_but_not_an_administrator(): void
@@ -382,6 +423,31 @@ class AdminDashboardTest extends TestCase
         $transaction = Transaction::query()->where('account_id', $account->id)->sole();
         $this->assertTrue(Money::toCents($transaction->amount) >= 100 && Money::toCents($transaction->amount) <= 5_000);
         $this->assertSame((string) $transaction->amount, (string) $account->balance);
+    }
+
+    public function test_admin_can_delete_a_ledger_transaction_and_reconcile_the_customer_balance(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create();
+        $account = Account::factory()->for($customer)->create(['balance' => 150]);
+        $transaction = Transaction::factory()->for($account)->create([
+            'transaction_type' => 'Credit',
+            'amount' => 50,
+            'description' => 'Duplicate credit',
+            'status' => 'completed',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.transactions.destroy', $transaction))
+            ->assertRedirect();
+
+        $this->assertModelMissing($transaction);
+        $this->assertSame('100.00', (string) $account->fresh()->balance);
+
+        $this->actingAs($customer)
+            ->get(route('transactions.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('transactions', []));
     }
 
     public function test_admin_can_edit_transaction_date_time_amount_and_status_with_an_audit_record(): void
