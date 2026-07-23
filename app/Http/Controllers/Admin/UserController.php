@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Concerns\PasswordValidationRules;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
@@ -16,6 +17,52 @@ use Inertia\Response;
 
 class UserController extends Controller
 {
+    use PasswordValidationRules;
+
+    public function create(): Response
+    {
+        return Inertia::render('admin/users/create');
+    }
+
+    public function storeCustomer(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'middle_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'date_of_birth' => ['required', 'date', 'before:today'],
+            'tax_id' => ['required', 'string', 'min:4', 'max:32'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['required', 'string', 'max:30'],
+            'street_address' => ['required', 'string', 'max:255'],
+            'address_line_two' => ['nullable', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:100'],
+            'state' => ['required', 'string', 'max:100'],
+            'postal_code' => ['required', 'string', 'max:20'],
+            'country' => ['required', 'string', 'max:100'],
+            'password' => $this->passwordRules(),
+        ]);
+
+        $customer = DB::transaction(function () use ($data): User {
+            $customer = new User($data);
+            $customer->name = collect([$data['first_name'], $data['middle_name'] ?? null, $data['last_name']])->filter()->join(' ');
+            $customer->forceFill(['email_verified_at' => now(), 'is_admin' => false])->save();
+
+            Account::query()->create([
+                'user_id' => $customer->id,
+                'name' => 'Everyday Checking',
+                'account_number' => 'CUST'.str_pad((string) $customer->id, 8, '0', STR_PAD_LEFT),
+                'type' => 'Checking',
+                'currency' => 'USD',
+                'balance' => 0,
+            ]);
+
+            return $customer;
+        });
+
+        return to_route('admin.users.show', $customer)->with('success', 'Customer application approved and account opened.');
+    }
+
     public function storeTestUsers(Request $request): RedirectResponse
     {
         $data = $request->validate([

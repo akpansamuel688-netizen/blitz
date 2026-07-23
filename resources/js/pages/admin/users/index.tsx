@@ -47,7 +47,9 @@ export default function AdminUsersIndex({ users, filters, summary }: Props) {
                             Customers and administrators on the Blitz platform.
                         </p>
                     </div>
-                    <form onSubmit={onSearch} className="flex w-full max-w-md gap-2">
+                    <div className="flex w-full max-w-xl flex-col gap-2 sm:flex-row sm:items-center">
+                    <Button asChild><Link href="/admin/users/create">New customer</Link></Button>
+                    <form onSubmit={onSearch} className="flex flex-1 gap-2">
                         <div className="relative flex-1">
                             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
@@ -61,6 +63,7 @@ export default function AdminUsersIndex({ users, filters, summary }: Props) {
                             Search
                         </Button>
                     </form>
+                    </div>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">

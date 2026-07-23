@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AdminDashboardTest extends TestCase
@@ -107,6 +108,42 @@ class AdminDashboardTest extends TestCase
         $this->assertDatabaseHas('users', ['name' => 'QA User 1', 'email' => 'qa-user-1@example.test', 'is_admin' => false]);
         $this->assertDatabaseHas('users', ['name' => 'QA User 3', 'email' => 'qa-user-3@example.test', 'is_admin' => false]);
         $this->assertDatabaseCount('accounts', 3);
+    }
+
+    public function test_admin_can_create_a_customer_from_the_new_customer_application(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->post(route('admin.users.store'), [
+                'first_name' => 'Morgan',
+                'middle_name' => 'Lee',
+                'last_name' => 'Customer',
+                'date_of_birth' => '1990-05-12',
+                'tax_id' => '123-45-6789',
+                'email' => 'morgan.customer@example.test',
+                'phone' => '+1 555 010 2000',
+                'street_address' => '123 Banking Street',
+                'address_line_two' => 'Suite 4',
+                'city' => 'Austin',
+                'state' => 'Texas',
+                'postal_code' => '78701',
+                'country' => 'United States',
+                'password' => 'secure-customer-password',
+                'password_confirmation' => 'secure-customer-password',
+            ])
+            ->assertRedirect();
+
+        $customer = User::query()->where('email', 'morgan.customer@example.test')->firstOrFail();
+        $this->assertSame('Morgan Lee Customer', $customer->name);
+        $this->assertFalse($customer->isAdmin());
+        $this->assertSame('123-45-6789', $customer->tax_id);
+        $this->assertNotSame('123-45-6789', DB::table('users')->where('id', $customer->id)->value('tax_id'));
+        $this->assertDatabaseHas('accounts', [
+            'user_id' => $customer->id,
+            'name' => 'Everyday Checking',
+            'balance' => '0.00',
+        ]);
     }
 
     public function test_admin_can_edit_a_test_user_name_and_account_balance(): void

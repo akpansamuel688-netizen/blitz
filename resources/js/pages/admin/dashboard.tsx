@@ -7,6 +7,7 @@ import {
     Landmark,
     ListChecks,
     Shield,
+    UserPlus,
     Users,
     Wallet,
 } from 'lucide-react';
@@ -63,6 +64,12 @@ export default function AdminDashboard({
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        <Button asChild>
+                            <Link href="/admin/users/create">
+                                <UserPlus className="size-4" />
+                                New customer
+                            </Link>
+                        </Button>
                         <Button variant="outline" asChild>
                             <Link href={admin.users.index()}>
                                 <Users className="size-4" />

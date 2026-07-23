@@ -60,6 +60,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [AdminUserController::class, 'create'])->name('users.create');
+    Route::post('/users', [AdminUserController::class, 'storeCustomer'])->name('users.store');
     Route::post('/users/test-users', [AdminUserController::class, 'storeTestUsers'])->name('users.test-users.store');
     Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
     Route::patch('/users/{user}/accounts/{account}/balance', [AdminUserController::class, 'updateAccountBalance'])->name('users.accounts.balance.update');
