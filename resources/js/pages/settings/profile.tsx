@@ -1,4 +1,5 @@
 import { Form, Head, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 /* @chisel-email-verification */
 import { Link } from '@inertiajs/react';
 /* @end-chisel-email-verification */
@@ -7,6 +8,7 @@ import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/profile';
@@ -31,6 +33,8 @@ export default function Profile(
     /* @end-chisel-email-verification */
 ) {
     const { auth } = usePage<PageProps>().props;
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const initials = auth.user.name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
 
     return (
         <>
@@ -54,6 +58,18 @@ export default function Profile(
                 >
                     {({ processing, errors }) => (
                         <>
+                            <div className="grid gap-3 rounded-xl border border-border p-4 sm:grid-cols-[auto_1fr] sm:items-center">
+                                <Avatar className="size-20 rounded-full">
+                                    <AvatarImage src={avatarPreview ?? auth.user.avatar} alt={auth.user.name} />
+                                    <AvatarFallback className="rounded-full text-lg">{initials}</AvatarFallback>
+                                </Avatar>
+                                <div className="grid gap-2">
+                                    <div><Label htmlFor="avatar">Profile picture</Label><p className="mt-1 text-sm text-muted-foreground">Upload a JPG, PNG, or WebP image up to 2 MB.</p></div>
+                                    <Input id="avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp" className="max-w-sm cursor-pointer" onChange={(event) => { const file = event.currentTarget.files?.[0]; setAvatarPreview(file ? URL.createObjectURL(file) : null); }} />
+                                    <InputError className="mt-1" message={errors.avatar} />
+                                </div>
+                            </div>
+
                             <div className="grid gap-2">
                                 <Label htmlFor="name">Name</Label>
 

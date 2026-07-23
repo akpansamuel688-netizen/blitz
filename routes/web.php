@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AccountController as AdminAccountController;
 use App\Http\Controllers\Admin\AuthenticatedAdminController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DebitCardController as AdminDebitCardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\TransferController as AdminTransferController;
 use App\Http\Controllers\Admin\TransactionController as AdminTransactionController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Banking\BillController;
 use App\Http\Controllers\Banking\BeneficiaryController;
 use App\Http\Controllers\Banking\BudgetController;
 use App\Http\Controllers\Banking\CategoryController;
+use App\Http\Controllers\Banking\DebitCardController;
 use App\Http\Controllers\Banking\DashboardController;
 use App\Http\Controllers\Banking\RecurringTransferController;
 use App\Http\Controllers\Banking\SavingsGoalController;
@@ -30,6 +32,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('accounts', [AccountController::class, 'store'])->name('accounts.store');
     Route::get('accounts/{account}', [AccountController::class, 'show'])->name('accounts.show');
     Route::post('accounts/{account}/transfer', [AccountController::class, 'transfer'])->name('accounts.transfer');
+
+    Route::get('cards', [DebitCardController::class, 'index'])->name('cards.index');
+    Route::post('cards/virtual', [DebitCardController::class, 'storeVirtual'])->name('cards.virtual.store');
+    Route::post('cards/physical', [DebitCardController::class, 'requestPhysical'])->name('cards.physical.store');
+    Route::get('cards/{card}/details', [DebitCardController::class, 'details'])->name('cards.details');
+    Route::delete('cards/{card}/physical-request', [DebitCardController::class, 'cancelPhysicalRequest'])->name('cards.physical.cancel');
 
     Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
@@ -68,6 +76,9 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
     Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
     Route::get('/accounts', [AdminAccountController::class, 'index'])->name('accounts.index');
+    Route::get('/cards', [AdminDebitCardController::class, 'index'])->name('cards.index');
+    Route::patch('/cards/{card}/approve', [AdminDebitCardController::class, 'approve'])->name('cards.approve');
+    Route::patch('/cards/{card}/reject', [AdminDebitCardController::class, 'reject'])->name('cards.reject');
     Route::get('/transfers', [AdminTransferController::class, 'index'])->name('transfers.index');
     Route::patch('/transfers/{transfer}', [AdminTransferController::class, 'update'])->name('transfers.update');
     Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');

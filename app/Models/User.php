@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -32,12 +33,15 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 #[Fillable([
     'name', 'first_name', 'middle_name', 'last_name', 'date_of_birth', 'tax_id', 'email', 'phone',
     'street_address', 'address_line_two', 'city', 'state', 'postal_code', 'country', 'password',
+    'profile_photo_path',
 ])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    protected $appends = ['avatar'];
 
     /**
      * @return array<string, string>
@@ -96,8 +100,18 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(Beneficiary::class);
     }
 
+    public function debitCards(): HasMany
+    {
+        return $this->hasMany(DebitCard::class);
+    }
+
     public function isAdmin(): bool
     {
         return (bool) $this->is_admin;
+    }
+
+    protected function avatar(): Attribute
+    {
+        return Attribute::get(fn () => $this->profile_photo_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->profile_photo_path) : null);
     }
 }

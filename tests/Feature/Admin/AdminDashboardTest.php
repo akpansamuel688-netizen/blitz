@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Account;
+use App\Models\DebitCard;
 use App\Models\Transaction;
 use App\Models\Transfer;
 use App\Models\User;
@@ -215,6 +216,44 @@ class AdminDashboardTest extends TestCase
                 ->component('admin/accounts/index')
                 ->has('accounts.data', 2)
             );
+    }
+
+    public function test_admin_can_approve_or_reject_requested_physical_debit_cards(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create();
+        $account = Account::factory()->for($customer)->create();
+        $approvedCard = DebitCard::query()->create([
+            'user_id' => $customer->id, 'account_id' => $account->id, 'card_type' => 'physical', 'status' => 'requested',
+            'card_number_hash' => hash('sha256', '4000000000000002'), 'last_four' => '0002', 'expires_at' => now()->addYears(3),
+        ]);
+        $rejectedCard = DebitCard::query()->create([
+            'user_id' => $customer->id, 'account_id' => $account->id, 'card_type' => 'physical', 'status' => 'requested',
+            'card_number_hash' => hash('sha256', '4000000000000010'), 'last_four' => '0010', 'expires_at' => now()->addYears(3),
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.cards.index'))->assertOk()->assertInertia(fn ($page) => $page->component('admin/cards/index')->has('requests', 2));
+        $this->patch(route('admin.cards.approve', $approvedCard))->assertRedirect();
+        $this->patch(route('admin.cards.reject', $rejectedCard))->assertRedirect();
+
+        $approvedCard->refresh();
+        $this->assertSame('active', $approvedCard->status);
+        $this->assertNotNull($approvedCard->card_number);
+        $this->assertNotNull($approvedCard->cvv);
+        $this->assertDatabaseHas('debit_cards', ['id' => $rejectedCard->id, 'status' => 'rejected']);
+    }
+
+    public function test_customers_cannot_approve_physical_card_requests(): void
+    {
+        $customer = User::factory()->create();
+        $card = DebitCard::query()->create([
+            'user_id' => $customer->id, 'account_id' => Account::factory()->for($customer)->create()->id,
+            'card_type' => 'physical', 'status' => 'requested', 'card_number_hash' => hash('sha256', '4000000000000002'),
+            'last_four' => '0002', 'expires_at' => now()->addYears(3),
+        ]);
+
+        $this->actingAs($customer)->patch(route('admin.cards.approve', $card))->assertRedirect(route('admin.login'));
+        $this->assertDatabaseHas('debit_cards', ['id' => $card->id, 'status' => 'requested']);
     }
 
     public function test_admin_can_view_transfer_ledger(): void

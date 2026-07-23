@@ -4,6 +4,8 @@ namespace Tests\Feature\Settings;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfileUpdateTest extends TestCase
@@ -59,6 +61,50 @@ class ProfileUpdateTest extends TestCase
             ->assertRedirect(route('profile.edit'));
 
         $this->assertNotNull($user->refresh()->email_verified_at);
+    }
+
+    public function test_user_can_upload_and_replace_a_profile_picture(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar' => $this->tinyPng('first.png'),
+        ])->assertRedirect(route('profile.edit'));
+
+        $firstPhoto = $user->refresh()->profile_photo_path;
+        $this->assertNotNull($firstPhoto);
+        Storage::disk('public')->assertExists($firstPhoto);
+
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar' => $this->tinyPng('replacement.png'),
+        ])->assertRedirect(route('profile.edit'));
+
+        $replacementPhoto = $user->refresh()->profile_photo_path;
+        $this->assertNotSame($firstPhoto, $replacementPhoto);
+        Storage::disk('public')->assertMissing($firstPhoto);
+        Storage::disk('public')->assertExists($replacementPhoto);
+        $this->assertStringContainsString('/storage/', $user->avatar);
+    }
+
+    public function test_profile_picture_must_be_an_allowed_image(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar' => UploadedFile::fake()->create('not-an-image.pdf', 100, 'application/pdf'),
+        ])->assertSessionHasErrors('avatar');
+    }
+
+    private function tinyPng(string $name): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent($name, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9J5H0AAAAASUVORK5CYII='));
     }
 
     public function test_user_can_delete_their_account()

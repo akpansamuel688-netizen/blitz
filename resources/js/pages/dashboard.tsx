@@ -3,6 +3,7 @@ import {
     ArrowDownLeft,
     ArrowRight,
     ArrowUpRight,
+    CreditCard,
     ListChecks,
     Plus,
     Sparkles,
@@ -72,6 +73,12 @@ export default function Dashboard({
                             <Link href={accounts.index()}>
                                 <Plus className="size-4" />
                                 New account
+                            </Link>
+                        </Button>
+                        <Button variant="outline" asChild>
+                            <Link href="/cards">
+                                <CreditCard className="size-4" />
+                                Cards
                             </Link>
                         </Button>
                         <Button asChild>
@@ -301,10 +308,11 @@ export default function Dashboard({
                                         const isCredit = tx.transaction_type === 'Credit';
 
                                         return (
-                                            <li
-                                                key={tx.id}
-                                                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-                                            >
+                                            <li key={tx.id} className="first:pt-0 last:pb-0">
+                                                <Link
+                                                    href={`/transactions/${tx.id}`}
+                                                    className="flex items-center gap-3 rounded-lg py-3 transition-colors hover:bg-muted/50"
+                                                >
                                                 <span
                                                     className={cn(
                                                         'flex size-9 shrink-0 items-center justify-center rounded-full',
@@ -338,6 +346,7 @@ export default function Dashboard({
                                                     {isCredit ? '+' : '−'}
                                                     {formatCurrency(tx.amount, tx.currency)}
                                                 </p>
+                                                </Link>
                                             </li>
                                         );
                                     })}

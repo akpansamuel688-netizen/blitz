@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     Home,
+    CreditCard,
     LayoutDashboard,
     LayoutGrid,
     ListChecks,
@@ -44,6 +45,11 @@ const bankingNavItems: NavItem[] = [
         title: 'Accounts',
         href: accounts.index(),
         icon: Wallet,
+    },
+    {
+        title: 'Cards',
+        href: '/cards',
+        icon: CreditCard,
     },
     {
         title: 'Transactions',
@@ -90,6 +96,11 @@ const adminNavItems: NavItem[] = [
         title: 'All accounts',
         href: admin.accounts.index(),
         icon: Shield,
+    },
+    {
+        title: 'Card requests',
+        href: '/admin/cards',
+        icon: CreditCard,
     },
     {
         title: 'Transfers',

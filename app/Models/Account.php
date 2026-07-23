@@ -50,4 +50,9 @@ class Account extends Model
     {
         return $this->hasMany(Transfer::class, 'destination_account_id');
     }
+
+    public function debitCards(): HasMany
+    {
+        return $this->hasMany(DebitCard::class);
+    }
 }
