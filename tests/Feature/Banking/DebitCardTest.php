@@ -97,6 +97,48 @@ class DebitCardTest extends TestCase
         $this->assertDatabaseHas('debit_cards', ['id' => $card->id, 'status' => 'cancelled']);
     }
 
+    public function test_customer_can_delete_their_virtual_card(): void
+    {
+        $user = User::factory()->create();
+        $account = Account::factory()->for($user)->create();
+        $this->actingAs($user)->post(route('cards.virtual.store'), ['account_id' => $account->id]);
+        $card = DebitCard::query()->sole();
+
+        $this->actingAs($user)->delete(route('cards.virtual.destroy', $card))->assertRedirect();
+
+        $this->assertDatabaseMissing('debit_cards', ['id' => $card->id]);
+    }
+
+    public function test_customer_cannot_delete_another_customers_virtual_card(): void
+    {
+        $owner = User::factory()->create();
+        $account = Account::factory()->for($owner)->create();
+        $this->actingAs($owner)->post(route('cards.virtual.store'), ['account_id' => $account->id]);
+        $card = DebitCard::query()->sole();
+
+        $this->actingAs(User::factory()->create())
+            ->delete(route('cards.virtual.destroy', $card))
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('debit_cards', ['id' => $card->id]);
+    }
+
+    public function test_virtual_card_delete_route_rejects_physical_cards(): void
+    {
+        $user = User::factory()->create();
+        $card = DebitCard::query()->create([
+            'user_id' => $user->id, 'account_id' => Account::factory()->for($user)->create()->id,
+            'card_type' => 'physical', 'status' => 'requested', 'card_number_hash' => hash('sha256', '4000000000000010'),
+            'last_four' => '0010', 'expires_at' => now()->addYears(3),
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('cards.virtual.destroy', $card))
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('debit_cards', ['id' => $card->id]);
+    }
+
     public function test_customer_can_reveal_only_their_active_virtual_card_details(): void
     {
         $user = User::factory()->create();
