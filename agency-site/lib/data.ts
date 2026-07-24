@@ -1,7 +1,7 @@
 import {
-  AppWindow, Blocks, Bot, Braces, BriefcaseBusiness, ChartNoAxesCombined,
-  CloudCog, Code2, Database, Gauge, Globe2, Laptop, LayoutDashboard,
-  LockKeyhole, MonitorSmartphone, Paintbrush, PanelsTopLeft, PlugZap,
+  AppWindow, Blocks, Braces, BriefcaseBusiness, ChartNoAxesCombined,
+  Code2, Database, Gauge, Globe2, Laptop, LayoutDashboard,
+  MonitorSmartphone, Paintbrush, PanelsTopLeft, PlugZap,
   Rocket, ServerCog, ShieldCheck, ShoppingBag, Smartphone, Sparkles,
   Wrench,
 } from "lucide-react";

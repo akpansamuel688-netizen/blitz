@@ -3,7 +3,7 @@
 :root { --ink:#07111f; --muted:#607087; --line:#dfe7ef; --blue:#145cff; --cyan:#27d7e8; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 88px; }
-body { margin:0; color:var(--ink); background:#f8fbff; font-family:Arial, Helvetica, sans-serif; }
+body { margin:0; overflow-x:hidden; color:var(--ink); background:#f8fbff; font-family:Arial, Helvetica, sans-serif; }
 ::selection { background:#bdeff8; color:#06111f; }
 a, button { -webkit-tap-highlight-color: transparent; }
 .container-shell { width:min(1180px, calc(100% - 40px)); margin-inline:auto; }
@@ -20,5 +20,5 @@ a, button { -webkit-tap-highlight-color: transparent; }
 .fade-up { animation:fadeUp .75s ease-out both; }
 @keyframes float { 50% { transform:translateY(-14px) rotate(2deg); } }
 @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
-@media (max-width:768px){ .container-shell{width:min(100% - 28px,1180px)} .section{padding:76px 0} }
+@media (max-width:768px){ .container-shell{width:min(calc(100% - 28px),1180px)} .section{padding:76px 0} .display{font-size:clamp(38px,11.5vw,48px);line-height:1.02} }
 @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto}.hero-orb,.fade-up{animation:none}.card-hover{transition:none} }
