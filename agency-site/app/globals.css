@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root { --ink:#07111f; --muted:#607087; --line:#dfe7ef; --blue:#145cff; --cyan:#27d7e8; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+body { margin:0; color:var(--ink); background:#f8fbff; font-family:Arial, Helvetica, sans-serif; }
+::selection { background:#bdeff8; color:#06111f; }
+a, button { -webkit-tap-highlight-color: transparent; }
+.container-shell { width:min(1180px, calc(100% - 40px)); margin-inline:auto; }
+.section { padding:108px 0; }
+.eyebrow { color:#1260df; font-size:12px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
+.display { font-size:clamp(40px, 6.1vw, 78px); line-height:.98; letter-spacing:-.055em; font-weight:800; }
+.section-title { font-size:clamp(32px, 4.2vw, 52px); line-height:1.05; letter-spacing:-.04em; font-weight:800; }
+.muted { color:var(--muted); }
+.glass { background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.75); backdrop-filter:blur(18px); }
+.dark-grid { background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px); background-size:54px 54px; }
+.card-hover { transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease; }
+.card-hover:hover { transform:translateY(-5px); border-color:#a8c8fa; box-shadow:0 22px 60px rgba(13,54,105,.12); }
+.hero-orb { animation:float 8s ease-in-out infinite; }
+.fade-up { animation:fadeUp .75s ease-out both; }
+@keyframes float { 50% { transform:translateY(-14px) rotate(2deg); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@media (max-width:768px){ .container-shell{width:min(100% - 28px,1180px)} .section{padding:76px 0} }
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto}.hero-orb,.fade-up{animation:none}.card-hover{transition:none} }
