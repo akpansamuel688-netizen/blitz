@@ -33,6 +33,8 @@ class StoreTransferRequest extends FormRequest
             'swift_bic' => [Rule::requiredIf($needsRecipientDetails && $this->input('transfer_type') === 'wire'), 'nullable', 'regex:/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/'],
             'iban' => [Rule::requiredIf($needsRecipientDetails && $this->input('transfer_type') === 'wire'), 'nullable', 'regex:/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/'],
             'wire_bank_name' => [Rule::requiredIf($needsRecipientDetails && $this->input('transfer_type') === 'wire'), 'nullable', 'string', 'max:150'],
+            'destination_country' => [Rule::requiredIf($this->input('transfer_type') === 'wire'), 'nullable', Rule::in(array_keys(config('wire.destinations')))],
+            'recipient_currency' => [Rule::requiredIf($this->input('transfer_type') === 'wire'), 'nullable', Rule::in(array_values(config('wire.destinations')))],
         ];
     }
 
@@ -41,6 +43,7 @@ class StoreTransferRequest extends FormRequest
         $this->merge([
             'swift_bic' => $this->filled('swift_bic') ? strtoupper(str_replace(' ', '', (string) $this->input('swift_bic'))) : null,
             'iban' => $this->filled('iban') ? strtoupper(str_replace(' ', '', (string) $this->input('iban'))) : null,
+            'recipient_currency' => config('wire.destinations.'.$this->input('destination_country')),
         ]);
     }
 }

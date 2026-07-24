@@ -7,10 +7,12 @@ use App\Concerns\PasswordValidationRules;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\Banking\ExchangeRateService;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -22,7 +24,12 @@ class UserController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('admin/users/create');
+        return Inertia::render('admin/users/create', [
+            'countries' => collect(config('countries'))->map(fn (string $currency, string $country) => [
+                'country' => $country,
+                'currency' => $currency,
+            ])->values(),
+        ]);
     }
 
     public function storeCustomer(Request $request): RedirectResponse
@@ -40,7 +47,7 @@ class UserController extends Controller
             'city' => ['required', 'string', 'max:100'],
             'state' => ['required', 'string', 'max:100'],
             'postal_code' => ['required', 'string', 'max:20'],
-            'country' => ['required', 'string', 'max:100'],
+            'country' => ['required', 'string', 'max:100', Rule::in(array_keys(config('countries')))],
             'password' => $this->passwordRules(),
         ]);
 
@@ -54,7 +61,7 @@ class UserController extends Controller
                 'name' => 'Everyday Checking',
                 'account_number' => 'CUST'.str_pad((string) $customer->id, 8, '0', STR_PAD_LEFT),
                 'type' => 'Checking',
-                'currency' => 'USD',
+                'currency' => config('countries.'.$data['country']),
                 'balance' => 0,
             ]);
 
@@ -163,6 +170,93 @@ class UserController extends Controller
         return back()->with('success', 'Account balance updated.');
     }
 
+    public function convertCurrency(Request $request, User $user, ExchangeRateService $rates): RedirectResponse
+    {
+        if ($user->isAdmin()) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'currency' => ['required', 'string', Rule::in(array_values(config('countries')))],
+        ]);
+
+        $sourceCurrencies = $user->accounts()->distinct()->pluck('currency');
+
+        if ($sourceCurrencies->isEmpty()) {
+            return back()->withErrors(['currency' => 'This customer has no accounts to convert.']);
+        }
+
+        if ($sourceCurrencies->count() !== 1) {
+            return back()->withErrors(['currency' => 'Currency conversion requires all customer accounts to currently use the same currency.']);
+        }
+
+        $sourceCurrency = (string) $sourceCurrencies->first();
+        $targetCurrency = (string) $data['currency'];
+
+        if ($sourceCurrency === $targetCurrency) {
+            return back()->with('success', "Customer accounts already use {$targetCurrency}.");
+        }
+
+        try {
+            $quote = $rates->quote($sourceCurrency, $targetCurrency, '1.00');
+        } catch (\RuntimeException) {
+            return back()->withErrors(['currency' => 'The exchange rate is temporarily unavailable. No balances were changed.']);
+        }
+
+        $rate = $quote['rate'];
+
+        DB::transaction(function () use ($request, $user, $sourceCurrency, $targetCurrency, $rate, $quote): void {
+            $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
+            $accounts = $lockedUser->accounts()->orderBy('id')->lockForUpdate()->get();
+
+            if ($accounts->pluck('currency')->unique()->values()->all() !== [$sourceCurrency]) {
+                throw ValidationException::withMessages(['currency' => 'Account currencies changed while conversion was being prepared. No balances were changed.']);
+            }
+
+            $accountIds = $accounts->pluck('id');
+            $convert = fn (mixed $amount): string => number_format(round(((float) $amount) * $rate, 2), 2, '.', '');
+
+            foreach ($accounts as $account) {
+                $account->update([
+                    'balance' => $convert($account->balance),
+                    'currency' => $targetCurrency,
+                ]);
+            }
+
+            Transaction::query()->whereIn('account_id', $accountIds)->get()
+                ->each(fn (Transaction $transaction) => $transaction->update(['amount' => $convert($transaction->amount)]));
+
+            $lockedUser->transfers()->get()->each(fn ($transfer) => $transfer->update([
+                'amount' => $convert($transfer->amount),
+                'fee_amount' => $convert($transfer->fee_amount),
+                'currency' => $targetCurrency,
+            ]));
+
+            $lockedUser->bills()->get()->each(fn ($bill) => $bill->update(['amount' => $convert($bill->amount)]));
+            $lockedUser->budgets()->get()->each(fn ($budget) => $budget->update([
+                'limit' => $convert($budget->limit),
+                'spent' => $convert($budget->spent),
+            ]));
+            $lockedUser->savingsGoals()->get()->each(fn ($goal) => $goal->update([
+                'target_amount' => $convert($goal->target_amount),
+                'current_amount' => $convert($goal->current_amount),
+            ]));
+            $lockedUser->recurringTransfers()->get()->each(fn ($transfer) => $transfer->update(['amount' => $convert($transfer->amount)]));
+
+            Log::notice('Admin converted customer currency', [
+                'admin_user_id' => $request->user()->id,
+                'customer_user_id' => $lockedUser->id,
+                'from_currency' => $sourceCurrency,
+                'to_currency' => $targetCurrency,
+                'exchange_rate' => $rate,
+                'rate_date' => $quote['date'],
+                'account_ids' => $accountIds->all(),
+            ]);
+        }, attempts: 3);
+
+        return back()->with('success', "Customer finances converted from {$sourceCurrency} to {$targetCurrency} at {$rate}.");
+    }
+
     public function destroy(User $user): RedirectResponse
     {
         if ($user->isAdmin()) {
@@ -243,11 +337,15 @@ class UserController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'phone' => $user->phone,
                 'is_admin' => $user->is_admin,
                 'email_verified_at' => $user->email_verified_at?->toIso8601String(),
                 'created_at' => $user->created_at?->toIso8601String(),
                 'accounts_count' => $accounts->count(),
                 'total_balance' => Money::format($accounts->sum('balance')),
+                'account_currency' => $accounts->pluck('currency')->unique()->count() === 1
+                    ? $accounts->first()?->currency
+                    : null,
             ],
             'accounts' => $accounts->map(fn ($account) => [
                 'id' => $account->id,
@@ -259,6 +357,7 @@ class UserController extends Controller
                 'created_at' => $account->created_at?->toIso8601String(),
             ]),
             'transactions' => $transactions,
+            'currencies' => collect(config('countries'))->values()->unique()->sort()->values(),
         ]);
     }
 }

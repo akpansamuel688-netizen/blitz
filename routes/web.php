@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update');
 
     Route::get('transfers', [TransferController::class, 'index'])->name('transfers.index');
+    Route::get('transfers/wire-quote', [TransferController::class, 'wireQuote'])->name('transfers.wire-quote');
     Route::post('transfers', [TransferController::class, 'store'])->name('transfers.store');
     Route::patch('transfers/{transfer}', [TransferController::class, 'update'])->name('transfers.update');
     Route::delete('beneficiaries/{beneficiary}', [BeneficiaryController::class, 'destroy'])->name('beneficiaries.destroy');
@@ -85,6 +86,7 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::post('/users/test-users', [AdminUserController::class, 'storeTestUsers'])->name('users.test-users.store');
     Route::patch('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
     Route::patch('/users/{user}/accounts/{account}/balance', [AdminUserController::class, 'updateAccountBalance'])->name('users.accounts.balance.update');
+    Route::patch('/users/{user}/currency', [AdminUserController::class, 'convertCurrency'])->name('users.currency.update');
     Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('users.show');
     Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
     Route::get('/accounts', [AdminAccountController::class, 'index'])->name('accounts.index');

@@ -8,10 +8,13 @@ use App\Models\Account;
 use App\Models\Beneficiary;
 use App\Models\Transfer;
 use App\Services\Banking\TransferService;
+use App\Services\Banking\ExchangeRateService;
 use App\Services\Security\TransferAuthorizationService;
 use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,14 +43,54 @@ class TransferController extends Controller
             'accounts' => $accounts,
             'transfers' => $transfers,
             'beneficiaries' => $beneficiaries,
+            'wireDestinations' => collect(config('wire.destinations'))->map(fn (string $currency, string $country) => [
+                'country' => $country,
+                'currency' => $currency,
+            ])->values(),
         ]);
     }
 
-    public function store(StoreTransferRequest $request, TransferAuthorizationService $authorizations): RedirectResponse
+    public function wireQuote(Request $request, ExchangeRateService $rates): JsonResponse
+    {
+        $data = $request->validate([
+            'source_account_id' => ['required', 'integer'],
+            'destination_country' => ['required', Rule::in(array_keys(config('wire.destinations')))],
+            'amount' => ['required', 'regex:/^\d{1,16}(\.\d{1,2})?$/', 'not_in:0,0.0,0.00'],
+        ]);
+
+        $account = Account::query()
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($data['source_account_id']);
+        $recipientCurrency = config('wire.destinations.'.$data['destination_country']);
+
+        try {
+            $quote = $rates->quote($account->currency, $recipientCurrency, $data['amount']);
+        } catch (\RuntimeException) {
+            return response()->json(['message' => 'The exchange-rate estimate is temporarily unavailable.'], 503);
+        }
+
+        return response()->json([
+            ...$quote,
+            'source_currency' => $account->currency,
+            'recipient_currency' => $recipientCurrency,
+            'destination_country' => $data['destination_country'],
+            'indicative' => true,
+        ]);
+    }
+
+    public function store(StoreTransferRequest $request, TransferAuthorizationService $authorizations, ExchangeRateService $rates): RedirectResponse
     {
         $data = $request->validated();
         $data['source_account_number'] = Account::query()->where('user_id', $request->user()->id)->findOrFail($data['source_account_id'])->account_number;
         if (! empty($data['destination_account_id'])) $data['destination_account_number'] = Account::query()->where('user_id', $request->user()->id)->findOrFail($data['destination_account_id'])->account_number;
+        if ($data['transfer_type'] === 'wire') {
+            $source = Account::query()->where('user_id', $request->user()->id)->findOrFail($data['source_account_id']);
+            try {
+                $data['exchange_quote'] = $rates->quote($source->currency, $data['recipient_currency'], $data['amount']);
+            } catch (\RuntimeException) {
+                return back()->withErrors(['destination_country' => 'The exchange-rate estimate is temporarily unavailable. Please try again.'])->withInput();
+            }
+        }
         $authorization = $authorizations->start($request->user(), $data, $request);
         $verification = $authorization->otpVerifications()->latest('id')->firstOrFail();
         $request->session()->put(['otp_transaction_authorization_id' => $authorization->id, 'otp_transaction_verification_id' => $verification->id]);

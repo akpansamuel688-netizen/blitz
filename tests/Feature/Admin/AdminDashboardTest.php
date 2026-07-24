@@ -11,6 +11,7 @@ use App\Support\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AdminDashboardTest extends TestCase
@@ -129,10 +130,10 @@ class AdminDashboardTest extends TestCase
                 'phone' => '+1 555 010 2000',
                 'street_address' => '123 Banking Street',
                 'address_line_two' => 'Suite 4',
-                'city' => 'Austin',
-                'state' => 'Texas',
-                'postal_code' => '78701',
-                'country' => 'United States',
+                'city' => 'Berlin',
+                'state' => 'Berlin',
+                'postal_code' => '10115',
+                'country' => 'Germany',
                 'password' => 'secure-customer-password',
                 'password_confirmation' => 'secure-customer-password',
             ])
@@ -141,11 +142,13 @@ class AdminDashboardTest extends TestCase
         $customer = User::query()->where('email', 'morgan.customer@example.test')->firstOrFail();
         $this->assertSame('Morgan Lee Customer', $customer->name);
         $this->assertFalse($customer->isAdmin());
+        $this->assertSame('Germany', $customer->country);
         $this->assertSame('123-45-6789', $customer->tax_id);
         $this->assertNotSame('123-45-6789', DB::table('users')->where('id', $customer->id)->value('tax_id'));
         $this->assertDatabaseHas('accounts', [
             'user_id' => $customer->id,
             'name' => 'Everyday Checking',
+            'currency' => 'EUR',
             'balance' => '0.00',
         ]);
     }
@@ -170,6 +173,62 @@ class AdminDashboardTest extends TestCase
             'transaction_type' => 'Credit',
             'amount' => '150.25',
             'description' => 'Admin balance adjustment',
+        ]);
+    }
+
+    public function test_admin_can_convert_an_existing_customers_currency_and_financial_amounts(): void
+    {
+        Http::fake([
+            'api.frankfurter.dev/*' => Http::response([
+                'date' => '2026-07-24',
+                'base' => 'USD',
+                'quote' => 'EUR',
+                'rate' => 0.85,
+            ]),
+        ]);
+
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create(['is_admin' => false]);
+        $account = Account::factory()->for($customer)->create([
+            'balance' => '100.00',
+            'currency' => 'USD',
+        ]);
+        $transaction = Transaction::factory()->for($account)->create(['amount' => '20.00']);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.currency.update', $customer), ['currency' => 'EUR'])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('accounts', [
+            'id' => $account->id,
+            'balance' => '85.00',
+            'currency' => 'EUR',
+        ]);
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'amount' => '17.00',
+        ]);
+    }
+
+    public function test_failed_exchange_quote_does_not_change_customer_currency_or_balance(): void
+    {
+        Http::fake(['api.frankfurter.dev/*' => Http::response([], 503)]);
+
+        $admin = User::factory()->admin()->create();
+        $customer = User::factory()->create(['is_admin' => false]);
+        $account = Account::factory()->for($customer)->create([
+            'balance' => '100.00',
+            'currency' => 'USD',
+        ]);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.currency.update', $customer), ['currency' => 'EUR'])
+            ->assertSessionHasErrors('currency');
+
+        $this->assertDatabaseHas('accounts', [
+            'id' => $account->id,
+            'balance' => '100.00',
+            'currency' => 'USD',
         ]);
     }
 

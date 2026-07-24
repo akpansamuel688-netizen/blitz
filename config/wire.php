@@ -1,0 +1,68 @@
+<?php
+
+return [
+    'rate_url' => env('WIRE_RATE_URL', 'https://api.frankfurter.dev/v2/rate'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Wire destinations
+    |--------------------------------------------------------------------------
+    | The primary settlement currency used for an indicative recipient quote.
+    */
+    'destinations' => [
+        'Australia' => 'AUD',
+        'Austria' => 'EUR',
+        'Belgium' => 'EUR',
+        'Brazil' => 'BRL',
+        'Bulgaria' => 'BGN',
+        'Canada' => 'CAD',
+        'China' => 'CNY',
+        'Croatia' => 'EUR',
+        'Cyprus' => 'EUR',
+        'Czechia' => 'CZK',
+        'Denmark' => 'DKK',
+        'Estonia' => 'EUR',
+        'Finland' => 'EUR',
+        'France' => 'EUR',
+        'Germany' => 'EUR',
+        'Greece' => 'EUR',
+        'Hong Kong' => 'HKD',
+        'Hungary' => 'HUF',
+        'Iceland' => 'ISK',
+        'India' => 'INR',
+        'Indonesia' => 'IDR',
+        'Ireland' => 'EUR',
+        'Israel' => 'ILS',
+        'Italy' => 'EUR',
+        'Japan' => 'JPY',
+        'Kenya' => 'KES',
+        'Latvia' => 'EUR',
+        'Lithuania' => 'EUR',
+        'Luxembourg' => 'EUR',
+        'Malaysia' => 'MYR',
+        'Malta' => 'EUR',
+        'Mexico' => 'MXN',
+        'Netherlands' => 'EUR',
+        'New Zealand' => 'NZD',
+        'Nigeria' => 'NGN',
+        'Norway' => 'NOK',
+        'Philippines' => 'PHP',
+        'Poland' => 'PLN',
+        'Portugal' => 'EUR',
+        'Romania' => 'RON',
+        'Saudi Arabia' => 'SAR',
+        'Singapore' => 'SGD',
+        'Slovakia' => 'EUR',
+        'Slovenia' => 'EUR',
+        'South Africa' => 'ZAR',
+        'South Korea' => 'KRW',
+        'Spain' => 'EUR',
+        'Sweden' => 'SEK',
+        'Switzerland' => 'CHF',
+        'Thailand' => 'THB',
+        'Turkey' => 'TRY',
+        'United Arab Emirates' => 'AED',
+        'United Kingdom' => 'GBP',
+        'United States' => 'USD',
+    ],
+];
