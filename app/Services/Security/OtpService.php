@@ -40,6 +40,7 @@ class OtpService
             'transaction_authorization_id' => $authorization?->id,
             'purpose' => $purpose,
             'code_hash' => Hash::make($code),
+            'development_code' => $this->mayExposeDevelopmentCode() ? $code : null,
             'expires_at' => now()->addMinutes(self::EXPIRES_IN_MINUTES),
             'last_sent_at' => now(),
             'ip_address' => $request?->ip(),
@@ -105,5 +106,10 @@ class OtpService
     private function event(OtpVerification $verification, string $event): void
     {
         OtpSecurityEvent::query()->create(['otp_verification_id' => $verification->id, 'user_id' => $verification->user_id, 'event' => $event]);
+    }
+
+    private function mayExposeDevelopmentCode(): bool
+    {
+        return app()->environment('local') && (bool) config('security.show_development_otp');
     }
 }
