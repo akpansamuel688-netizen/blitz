@@ -48,7 +48,7 @@ export default function Categories({ categories: categoryItems }: Props) {
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="color">Color</Label>
-                                        <Input id="color" name="color" type="color" defaultValue="#0F6B66" required />
+                                        <Input id="color" name="color" type="color" defaultValue="#1557C0" required />
                                         <InputError message={errors.color} />
                                     </div>
                                     <div className="flex items-end">

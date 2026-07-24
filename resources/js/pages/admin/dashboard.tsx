@@ -60,7 +60,7 @@ export default function AdminDashboard({
                             Platform console
                         </h1>
                         <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
-                            Monitor customers, accounts, and money movement across Blitz.
+                            Monitor customers, accounts, and money movement across NovaTrust Bank.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -254,7 +254,7 @@ export default function AdminDashboard({
                         <CardHeader className="flex flex-row items-start justify-between space-y-0">
                             <div>
                                 <CardTitle>Top accounts</CardTitle>
-                                <CardDescription>Highest balances on Blitz.</CardDescription>
+                                <CardDescription>Highest balances at NovaTrust Bank.</CardDescription>
                             </div>
                             <Button variant="ghost" size="sm" asChild>
                                 <Link href={admin.accounts.index()}>

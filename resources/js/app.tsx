@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Blitz';
+const appName = import.meta.env.VITE_APP_NAME || 'NovaTrust Bank';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -32,7 +32,7 @@ createInertiaApp({
         );
     },
     progress: {
-        color: '#0F6B66',
+        color: '#1557C0',
     },
 });
 

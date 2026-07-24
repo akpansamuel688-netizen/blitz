@@ -1,13 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Blitz mark">
-  <defs>
-    <linearGradient id="mark-bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#148F87"/>
-      <stop offset="1" stop-color="#0A4F4B"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="NovaTrust Bank mark">
+  <defs><linearGradient id="mark-bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse"><stop stop-color="#2563EB"/><stop offset="1" stop-color="#082B5C"/></linearGradient></defs>
   <rect width="64" height="64" rx="16" fill="url(#mark-bg)"/>
-  <path
-    fill="#F7F6F2"
-    d="M37.4 9.8 16.3 35.2c-.5.6-.07 1.55.72 1.55h12.4l-3.35 17.2c-.22 1.12 1.18 1.8 1.94.95L48.3 28.4c.55-.62.12-1.58-.72-1.58H35.1l3.05-15.55c.22-1.13-1.18-1.81-1.94-.97Z"
-  />
+  <path fill="#F8FAFC" d="M16 47V17h8l16 19V17h8v30h-8L24 28v19h-8Z"/>
 </svg>

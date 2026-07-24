@@ -13,13 +13,13 @@ export default function AdminLogin() {
         <Form action="/admin/login" method="post" resetOnSuccess={['password']} className="flex flex-col gap-6">
             {({ processing, errors }) => <>
                 <div className="rounded-3xl border border-border bg-muted p-4 text-sm text-muted-foreground">
-                    <p className="font-medium text-foreground">Blitz administration</p>
+                    <p className="font-medium text-foreground">NovaTrust Bank administration</p>
                     <p className="mt-1">Use your dedicated administrator credentials to access the platform console.</p>
                 </div>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
                         <Label htmlFor="email">Administrator email</Label>
-                        <Input id="email" name="email" type="email" autoComplete="email" required autoFocus placeholder="admin@blitz.test" />
+                        <Input id="email" name="email" type="email" autoComplete="email" required autoFocus placeholder="Administrator email" />
                         <InputError message={errors.email} />
                     </div>
                     <div className="grid gap-2">
@@ -43,5 +43,5 @@ export default function AdminLogin() {
 
 AdminLogin.layout = {
     title: 'Administrator sign in',
-    description: 'Access the standalone Blitz administration console',
+    description: 'Access the secure NovaTrust Bank administration console',
 };

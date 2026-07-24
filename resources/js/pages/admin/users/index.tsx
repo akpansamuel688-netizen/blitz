@@ -44,7 +44,7 @@ export default function AdminUsersIndex({ users, filters, summary }: Props) {
                     <div>
                         <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Customers and administrators on the Blitz platform.
+                            Customers and administrators on the NovaTrust Bank platform.
                         </p>
                     </div>
                     <div className="flex w-full max-w-xl flex-col gap-2 sm:flex-row sm:items-center">

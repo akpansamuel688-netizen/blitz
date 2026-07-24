@@ -37,7 +37,7 @@ export default function RecurringTransfers({ transfers, accounts }: Props) {
                     <div>
                         <h1 className="text-2xl font-semibold tracking-tight">Recurring transfers</h1>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Schedule automatic moves between your Blitz accounts.
+                            Schedule automatic moves between your NovaTrust accounts.
                         </p>
                     </div>
                     <p className="text-sm text-muted-foreground">{activeCount} active schedule{activeCount === 1 ? '' : 's'}</p>

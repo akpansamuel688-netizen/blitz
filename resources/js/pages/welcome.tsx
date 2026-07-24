@@ -98,7 +98,7 @@ const pillars = [
 const steps = [
     {
         step: '01',
-        title: 'Create your Blitz profile',
+        title: 'Create your NovaTrust profile',
         description: 'Sign up in minutes with modern authentication. Add passkeys when you’re ready.',
     },
     {
@@ -115,7 +115,7 @@ const steps = [
 
 const testimonials = [
     {
-        quote: 'I finally stopped using one app for personal and another for the studio. Blitz shows both without feeling like “enterprise software.”',
+        quote: 'I finally stopped using one app for personal and another for the studio. NovaTrust keeps both clear without making banking feel complicated.',
         name: 'Jordan Hale',
         role: 'Independent designer & studio owner',
     },
@@ -281,24 +281,24 @@ export default function Welcome() {
                                 className="h-full w-full object-cover"
                                 fetchPriority="high"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.18_0.04_195)]/95 via-[oklch(0.22_0.05_190)]/80 to-[oklch(0.3_0.06_190)]/45" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.18_0.07_258)]/95 via-[oklch(0.24_0.10_255)]/80 to-[oklch(0.34_0.12_250)]/45" />
                             <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.16_0.03_250)]/70 via-transparent to-black/25" />
                         </div>
 
                         <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8 lg:py-40">
                             <div className="max-w-3xl">
                                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide text-white/90 backdrop-blur-sm">
-                                    <Sparkles className="size-3.5 text-teal-300" />
+                                    <Sparkles className="size-3.5 text-blue-300" />
                                     Personal & SME banking
                                 </div>
 
                                 <h1 className="font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl lg:leading-[1.08]">
-                                    {brand.tagline.split(' who ')[0]} who
-                                    <span className="block text-teal-200/90">run something.</span>
+                                    Confidence in every
+                                    <span className="block text-blue-200/90">financial move.</span>
                                 </h1>
 
                                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/75 sm:text-xl">
-                                    Blitz is the account hub for freelancers, founders, and small businesses—personal and
+                                    NovaTrust is the account hub for individuals, founders, and small businesses—personal and
                                     operating balances together, transfers when cash needs to move, security you will
                                     actually use.
                                 </p>
@@ -307,7 +307,7 @@ export default function Welcome() {
                                     <Button
                                         size="lg"
                                         asChild
-                                        className="h-12 bg-white px-7 text-base text-[oklch(0.22_0.05_195)] hover:bg-white/90"
+                                        className="h-12 bg-white px-7 text-base text-[oklch(0.24_0.10_258)] hover:bg-white/90"
                                     >
                                         <Link href={primaryHref}>
                                             {primaryLabel}
@@ -327,7 +327,7 @@ export default function Welcome() {
                                 <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/65">
                                     {trustPoints.map((point) => (
                                         <li key={point} className="flex items-center gap-2">
-                                            <CheckCircle2 className="size-4 text-teal-300" />
+                                            <CheckCircle2 className="size-4 text-blue-300" />
                                             {point}
                                         </li>
                                     ))}
@@ -372,14 +372,14 @@ export default function Welcome() {
                         <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
                             <div className="lg:col-span-5">
                                 <p className="text-sm font-semibold tracking-widest text-brand uppercase">
-                                    Why Blitz exists
+                                    Why NovaTrust exists
                                 </p>
                                 <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
                                     Consumer simple. Operator clear.
                                 </h2>
                                 <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
                                     Big banks bury small operators in products. Pure consumer apps ignore business cash.
-                                    Blitz sits in the middle: everyday banking for people who also run a P&amp;L—even if
+                                    NovaTrust brings everyday and business banking together for people who also run a P&amp;L—even if
                                     that P&amp;L is just you.
                                 </p>
                                 <div className="mt-8 space-y-4">
@@ -475,7 +475,7 @@ export default function Welcome() {
                                         Not Wall Street. Not a toy wallet.
                                     </h2>
                                     <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-                                        Blitz is for people whose money has both a life and a livelihood—household
+                                        NovaTrust is for people whose money has both a life and a livelihood—household
                                         spending next to client revenue, savings next to vendor payments.
                                     </p>
 
@@ -526,25 +526,25 @@ export default function Welcome() {
                     {/* ─── How it works ─── */}
                     <section
                         id="how-it-works"
-                        className="scroll-mt-20 bg-[oklch(0.22_0.05_195)] text-white dark:bg-[oklch(0.2_0.04_200)]"
+                        className="scroll-mt-20 bg-[#082b5c] text-white dark:bg-[#061c3d]"
                     >
                         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
                             <div className="grid gap-12 lg:grid-cols-12">
                                 <div className="lg:col-span-4">
-                                    <p className="text-sm font-semibold tracking-widest text-teal-300/80 uppercase">
+                                    <p className="text-sm font-semibold tracking-widest text-blue-300/80 uppercase">
                                         How it works
                                     </p>
                                     <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
                                         Live before lunch.
                                     </h2>
                                     <p className="mt-4 text-white/65">
-                                        No multi-week “implementation.” Open Blitz, add the accounts you already think
+                                        No multi-week “implementation.” Open NovaTrust, add the accounts you already think
                                         in, and start moving money with a trail you can trust.
                                     </p>
                                     <Button
                                         size="lg"
                                         asChild
-                                        className="mt-8 h-12 bg-white px-7 text-[oklch(0.22_0.05_195)] hover:bg-white/90"
+                                        className="mt-8 h-12 bg-white px-7 text-[#082b5c] hover:bg-blue-50"
                                     >
                                         <Link href={primaryHref}>
                                             {primaryLabel}
@@ -557,9 +557,9 @@ export default function Welcome() {
                                     {steps.map((item) => (
                                         <li
                                             key={item.step}
-                                            className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
+                                            className="rounded-2xl border border-blue-200/20 bg-blue-950/30 p-6 shadow-sm backdrop-blur-sm"
                                         >
-                                            <span className="font-mono text-sm text-teal-300/70">{item.step}</span>
+                                            <span className="font-mono text-sm text-blue-300/70">{item.step}</span>
                                             <h3 className="mt-4 text-lg font-semibold">{item.title}</h3>
                                             <p className="mt-2 text-sm leading-relaxed text-white/65">
                                                 {item.description}
@@ -584,7 +584,7 @@ export default function Welcome() {
                                     </h2>
                                 </div>
                                 <p className="text-lg text-muted-foreground lg:col-span-6 lg:col-start-7">
-                                    Real operators choose Blitz when personal and business cash have to coexist—without
+                                    Customers choose NovaTrust when personal and business cash have to coexist—without
                                     pretending they are a multinational treasury desk.
                                 </p>
                             </div>
@@ -616,7 +616,7 @@ export default function Welcome() {
                                 <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.2_0.05_195)]/90 via-[oklch(0.25_0.05_190)]/55 to-transparent" />
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="max-w-lg px-8 py-10 sm:px-12">
-                                        <p className="text-sm font-medium tracking-wide text-teal-200/80 uppercase">
+                                        <p className="text-sm font-medium tracking-wide text-blue-200/80 uppercase">
                                             Wherever you operate
                                         </p>
                                         <p className="mt-3 text-2xl font-semibold text-white sm:text-3xl">
@@ -651,7 +651,7 @@ export default function Welcome() {
                                         Ready to bank like an operator?
                                     </h2>
                                     <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-                                        Open Blitz, add your first accounts, and keep personal and business cash in one
+                                        Open NovaTrust, add your first accounts, and keep personal and business cash in one
                                         clear place—with security built for people who move real money every week.
                                     </p>
                                     <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

@@ -1,34 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none" role="img" aria-label="Blitz">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none" role="img" aria-label="NovaTrust Bank">
   <defs>
-    <linearGradient id="og-bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0A4F4B"/>
-      <stop offset="0.55" stop-color="#0F6B66"/>
-      <stop offset="1" stop-color="#0C1222"/>
-    </linearGradient>
-    <linearGradient id="og-mark" x1="96" y1="120" x2="168" y2="192" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#E8FFFB"/>
-      <stop offset="1" stop-color="#F7F6F2"/>
-    </linearGradient>
-    <pattern id="og-grid" width="48" height="48" patternUnits="userSpaceOnUse">
-      <path d="M48 0H0V48" fill="none" stroke="white" stroke-opacity="0.06"/>
-    </pattern>
+    <linearGradient id="og-bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse"><stop stop-color="#082B5C"/><stop offset=".58" stop-color="#1557C0"/><stop offset="1" stop-color="#0B1930"/></linearGradient>
+    <pattern id="og-grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" fill="none" stroke="white" stroke-opacity=".06"/></pattern>
   </defs>
-
-  <rect width="1200" height="630" fill="url(#og-bg)"/>
-  <rect width="1200" height="630" fill="url(#og-grid)"/>
-  <circle cx="980" cy="140" r="220" fill="#14B8A6" fill-opacity="0.16"/>
-  <circle cx="1080" cy="520" r="160" fill="#F7F6F2" fill-opacity="0.05"/>
-
-  <rect x="96" y="120" width="72" height="72" rx="18" fill="url(#og-mark)"/>
-  <path
-    fill="#0F6B66"
-    d="M141.2 134 119.5 160.2c-.42.5-.06 1.28.6 1.28h10.55l-2.85 14.65c-.19.95 1 1.53 1.65.8L152 154.1c.46-.55.1-1.42-.6-1.42h-10.65l2.6-13.25c.19-.96-1-1.54-1.65-.82Z"
-  />
-
-  <text x="188" y="168" font-family="Instrument Sans, ui-sans-serif, system-ui, sans-serif" font-size="36" font-weight="650" fill="#F7F6F2" letter-spacing="-0.03em">Blitz</text>
-
-  <text x="96" y="300" font-family="Instrument Sans, ui-sans-serif, system-ui, sans-serif" font-size="64" font-weight="650" fill="#F7F6F2" letter-spacing="-0.035em">Banking for people</text>
-  <text x="96" y="380" font-family="Instrument Sans, ui-sans-serif, system-ui, sans-serif" font-size="64" font-weight="650" fill="#A7F3D0" letter-spacing="-0.035em">who run something.</text>
-  <text x="96" y="460" font-family="Instrument Sans, ui-sans-serif, system-ui, sans-serif" font-size="26" fill="#E8F5F3" fill-opacity="0.88">Personal &amp; SME banking · Multi-account · Instant transfers · Bank-grade security</text>
-  <rect x="96" y="510" width="180" height="6" rx="3" fill="#14B8A6"/>
+  <rect width="1200" height="630" fill="url(#og-bg)"/><rect width="1200" height="630" fill="url(#og-grid)"/>
+  <circle cx="980" cy="140" r="220" fill="#60A5FA" fill-opacity=".16"/><circle cx="1080" cy="520" r="160" fill="#F8FAFC" fill-opacity=".05"/>
+  <rect x="96" y="120" width="72" height="72" rx="18" fill="#F8FAFC"/><path fill="#1557C0" d="M114 174v-36h9l18 21v-21h9v36h-9l-18-21v21h-9Z"/>
+  <text x="188" y="168" font-family="Instrument Sans,ui-sans-serif,system-ui,sans-serif" font-size="36" font-weight="700" fill="#F8FAFC" letter-spacing="-.03em">NovaTrust Bank</text>
+  <text x="96" y="300" font-family="Instrument Sans,ui-sans-serif,system-ui,sans-serif" font-size="64" font-weight="650" fill="#F8FAFC" letter-spacing="-.035em">Confidence in every</text>
+  <text x="96" y="380" font-family="Instrument Sans,ui-sans-serif,system-ui,sans-serif" font-size="64" font-weight="650" fill="#BFDBFE" letter-spacing="-.035em">financial move.</text>
+  <text x="96" y="460" font-family="Instrument Sans,ui-sans-serif,system-ui,sans-serif" font-size="26" fill="#EAF2FF">Personal and business banking · Fast transfers · Savings · Robust security</text>
+  <rect x="96" y="510" width="180" height="6" rx="3" fill="#60A5FA"/>
 </svg>

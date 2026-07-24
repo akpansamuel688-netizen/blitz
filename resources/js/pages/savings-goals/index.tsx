@@ -105,7 +105,7 @@ export default function SavingsGoals({ goals, accounts }: Props) {
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="color">Color</Label>
-                                        <Input id="color" name="color" type="color" defaultValue="#0F6B66" />
+                                        <Input id="color" name="color" type="color" defaultValue="#1557C0" />
                                         <InputError message={errors.color} />
                                     </div>
                                     <div className="sm:col-span-2 flex justify-end">

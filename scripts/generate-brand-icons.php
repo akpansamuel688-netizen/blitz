@@ -16,12 +16,12 @@ function makeIcon(int $size, string $path): void
 {
     $base = imagecreatetruecolor($size, $size);
 
-    // Vertical gradient #148F87 → #0A4F4B
+    // Vertical gradient #2563EB → #082B5C
     for ($y = 0; $y < $size; $y++) {
         $t = $y / max(1, $size - 1);
-        $r = (int) round(20 + (10 - 20) * $t);
-        $g = (int) round(143 + (79 - 143) * $t);
-        $b = (int) round(135 + (75 - 135) * $t);
+        $r = (int) round(37 + (8 - 37) * $t);
+        $g = (int) round(99 + (43 - 99) * $t);
+        $b = (int) round(235 + (92 - 235) * $t);
         $col = imagecolorallocate($base, $r, $g, $b);
         imageline($base, 0, $y, $size, $y, $col);
     }
@@ -51,14 +51,18 @@ function makeIcon(int $size, string $path): void
         }
     }
 
-    // Geometric bolt (normalized coordinates)
+    // Architectural N (normalized coordinates)
     $bolt = [
-        [0.58, 0.16],
-        [0.26, 0.54],
-        [0.48, 0.54],
-        [0.40, 0.84],
-        [0.74, 0.46],
-        [0.52, 0.46],
+        [0.25, 0.75],
+        [0.25, 0.25],
+        [0.38, 0.25],
+        [0.62, 0.58],
+        [0.62, 0.25],
+        [0.75, 0.25],
+        [0.75, 0.75],
+        [0.62, 0.75],
+        [0.38, 0.42],
+        [0.38, 0.75],
     ];
 
     $points = [];
@@ -67,7 +71,7 @@ function makeIcon(int $size, string $path): void
         $points[] = (int) round($py * $size);
     }
 
-    $cream = imagecolorallocate($out, 247, 246, 242);
+    $cream = imagecolorallocate($out, 248, 250, 252);
     imagefilledpolygon($out, $points, $cream);
 
     if (! is_dir(dirname($path))) {

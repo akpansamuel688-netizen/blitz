@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('cards/virtual', [DebitCardController::class, 'storeVirtual'])->name('cards.virtual.store');
     Route::post('cards/physical', [DebitCardController::class, 'requestPhysical'])->name('cards.physical.store');
     Route::get('cards/{card}/details', [DebitCardController::class, 'details'])->name('cards.details');
+    Route::delete('cards/{card}/virtual', [DebitCardController::class, 'destroyVirtual'])->name('cards.virtual.destroy');
     Route::delete('cards/{card}/physical-request', [DebitCardController::class, 'cancelPhysicalRequest'])->name('cards.physical.cancel');
 
     Route::get('transactions', [TransactionController::class, 'index'])->name('transactions.index');

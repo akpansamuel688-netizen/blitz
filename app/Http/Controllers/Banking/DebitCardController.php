@@ -59,6 +59,16 @@ class DebitCardController extends Controller
         return back()->with('success', 'Physical debit card request cancelled.');
     }
 
+    public function destroyVirtual(Request $request, DebitCard $card): RedirectResponse
+    {
+        $this->ensureOwnedByUser($request, $card);
+        abort_unless($card->card_type === 'virtual', 404);
+
+        $card->delete();
+
+        return back()->with('success', 'Virtual debit card deleted.');
+    }
+
     private function create(Request $request, string $type): RedirectResponse
     {
         $data = $request->validate(['account_id' => ['required', 'integer', 'exists:accounts,id']]);

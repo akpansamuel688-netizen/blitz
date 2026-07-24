@@ -1,22 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" fill="none" role="img" aria-label="Blitz">
-  <defs>
-    <linearGradient id="wm-bg" x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#148F87"/>
-      <stop offset="1" stop-color="#0A4F4B"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 205 40" fill="none" role="img" aria-label="NovaTrust Bank">
+  <defs><linearGradient id="wm-bg" x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse"><stop stop-color="#2563EB"/><stop offset="1" stop-color="#082B5C"/></linearGradient></defs>
   <rect width="40" height="40" rx="10" fill="url(#wm-bg)"/>
-  <path
-    fill="#F7F6F2"
-    d="M23.5 6.2 10.2 22.2c-.3.37-.04.95.44.95h7.55l-2.05 10.5c-.14.7.73 1.12 1.2.59L30.4 18.7c.34-.38.07-.96-.45-.96h-7.55l1.9-9.5c.14-.7-.73-1.12-1.2-.59Z"
-  />
-  <text
-    x="52"
-    y="27"
-    fill="#0C1222"
-    font-family="Instrument Sans, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
-    font-size="22"
-    font-weight="650"
-    letter-spacing="-0.03em"
-  >Blitz</text>
+  <path fill="#F8FAFC" d="M10 30V10h5l10 12V10h5v20h-5L15 18v12h-5Z"/>
+  <text x="52" y="27" fill="#0B1930" font-family="Instrument Sans,ui-sans-serif,system-ui,sans-serif" font-size="22" font-weight="700" letter-spacing="-0.03em">NovaTrust</text>
 </svg>
