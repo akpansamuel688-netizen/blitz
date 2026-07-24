@@ -38,14 +38,6 @@ export default function Login({ status, canResetPassword }: Props) {
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="rounded-3xl border border-border bg-muted p-4 text-sm text-muted-foreground">
-                            <p className="font-medium text-foreground">Demo login</p>
-                            <p className="mt-1">Use the sample account below to open the dashboard instantly.</p>
-                            <div className="mt-3 grid gap-1 rounded-xl bg-background p-3 text-sm text-muted-foreground">
-                                <p><span className="font-semibold text-foreground">Email:</span> test@example.com</p>
-                                <p><span className="font-semibold text-foreground">Password:</span> password</p>
-                            </div>
-                        </div>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email address</Label>
