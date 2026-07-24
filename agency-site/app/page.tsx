@@ -9,11 +9,11 @@ import { benefits, buildItems, packages, process, projects, services, technologi
 import { siteConfig } from "@/lib/config";
 
 export default function Home() {
-  return <main>
+  return <main className="theme-calm">
     <Navbar />
     <Hero />
 
-    <section className="border-b border-emerald-950/10 bg-[#dce9df] py-7">
+    <section className="border-b border-white/10 bg-[#15231d] py-7">
       <div className="container-shell flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-xs font-extrabold tracking-[.14em] text-slate-400 uppercase">
         <span className="text-slate-900">Built for</span>{["Startups","Growing businesses","Enterprise teams","Visionary founders"].map(x=><span key={x}>{x}</span>)}
       </div>
@@ -39,10 +39,10 @@ export default function Home() {
       </div>
     </section>
 
-    <section className="section bg-[#edf4ee]">
+    <section className="section bg-[#121e19]">
       <div className="container-shell">
         <SectionHeading eyebrow="Development programs" title="The right engagement for where you are now." copy="Choose a clear starting point. We shape scope, team, and delivery around your product—not the other way around." centered/>
-        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{packages.map(x=><article key={x.title} className={`card-hover flex min-h-[300px] flex-col rounded-[24px] border p-7 ${x.featured?"border-blue-600 bg-blue-600 text-white shadow-xl shadow-blue-600/20":"border-slate-200 bg-[#f8fbff]"}`}>
+        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{packages.map(x=><article key={x.title} className={`card-hover flex min-h-[300px] flex-col rounded-[24px] border p-7 ${x.featured?"border-emerald-500 bg-[#34795f] text-white shadow-xl shadow-black/20":"border-slate-200 bg-[#1a2821]"}`}>
           <IconBox icon={x.icon} dark={x.featured}/>{x.featured&&<span className="absolute" />}
           <h3 className="mt-7 text-xl font-extrabold">{x.title}</h3><p className={`mt-3 text-sm leading-6 ${x.featured?"text-blue-100":"muted"}`}>{x.copy}</p>
           <a href="#contact" className={`group mt-auto flex items-center gap-2 pt-8 text-sm font-bold ${x.featured?"text-white":"text-blue-600"}`}>Request This Service <ArrowRight size={16} className="transition group-hover:translate-x-1"/></a>
@@ -50,28 +50,28 @@ export default function Home() {
       </div>
     </section>
 
-    <section className="section bg-[#d9e8dc]">
+    <section className="section bg-[#17251f]">
       <div className="container-shell grid gap-14 lg:grid-cols-[.8fr_1.2fr] lg:items-start">
         <div className="lg:sticky lg:top-28"><SectionHeading eyebrow="Why Monark" title="Serious work. Clear standards." copy="We combine thoughtful design with robust engineering to deliver work your customers trust and your team can grow."/><div className="mt-8"><PrimaryLink href="#contact">Build with us</PrimaryLink></div></div>
-        <div className="grid gap-3 sm:grid-cols-2">{benefits.map(([name,Icon],i)=><div key={name} className="flex items-center gap-4 rounded-2xl border border-white bg-white/70 p-4 shadow-sm"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-950 text-cyan-300"><Icon size={18}/></span><div><p className="font-bold">{name}</p><p className="mt-1 text-xs text-slate-500">{i%2===0?"Intentional at every detail.":"Built into every delivery."}</p></div></div>)}</div>
+        <div className="grid gap-3 sm:grid-cols-2">{benefits.map(([name,Icon],i)=><div key={name} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#1d2d25] p-4 shadow-sm"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-950 text-emerald-300"><Icon size={18}/></span><div><p className="font-bold">{name}</p><p className="mt-1 text-xs text-slate-500">{i%2===0?"Intentional at every detail.":"Built into every delivery."}</p></div></div>)}</div>
       </div>
     </section>
 
-    <section id="process" className="section bg-[#edf4ee]">
+    <section id="process" className="section bg-[#121e19]">
       <div className="container-shell">
         <SectionHeading eyebrow="Our process" title="Clarity at every stage." copy="A practical, collaborative path from first conversation to stable launch—and beyond."/>
         <div className="relative mt-14 grid gap-4 md:grid-cols-3">{process.map(([num,title,copy],i)=><article key={num} className={`relative rounded-2xl border p-6 ${i===8?"border-blue-600 bg-blue-600 text-white":"border-slate-200 bg-white"}`}><span className={`text-xs font-extrabold tracking-widest ${i===8?"text-cyan-200":"text-blue-600"}`}>{num}</span><h3 className="mt-6 text-lg font-extrabold">{title}</h3><p className={`mt-2 text-sm leading-6 ${i===8?"text-blue-100":"muted"}`}>{copy}</p>{i<8&&<span className="absolute -right-3 top-1/2 z-10 hidden size-6 place-items-center rounded-full bg-slate-950 text-white md:grid"><ChevronRight size={13}/></span>}</article>)}</div>
       </div>
     </section>
 
-    <section id="technologies" className="section border-y border-emerald-950/10 bg-[#dfeae1]">
+    <section id="technologies" className="section border-y border-white/10 bg-[#17251f]">
       <div className="container-shell">
         <SectionHeading eyebrow="Technology" title="Modern tools. Chosen with purpose." copy="A scalable stack for products that need to be fast today and maintainable tomorrow." centered/>
         <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">{technologies.map(([name,mark])=><div key={name} className="card-hover flex flex-col items-center rounded-2xl border border-slate-200 bg-white p-5 text-center"><span className="grid size-11 place-items-center rounded-xl bg-slate-950 text-xs font-black tracking-wider text-cyan-300">{mark}</span><p className="mt-3 text-sm font-bold">{name}</p></div>)}</div>
       </div>
     </section>
 
-    <section id="portfolio" className="section bg-[#edf4ee]">
+    <section id="portfolio" className="section bg-[#121e19]">
       <div className="container-shell">
         <SectionHeading eyebrow="Selected concepts" title="Products made to move businesses forward." copy="Representative project concepts showing the breadth of platforms we design and engineer."/>
         <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">{projects.map((x,i)=><article key={x.title} className="group overflow-hidden rounded-[24px] border border-slate-200 bg-white">
@@ -90,14 +90,14 @@ export default function Home() {
       </div>
     </section>
 
-    <section id="about" className="section bg-[#e3eee5]">
+    <section id="about" className="section bg-[#15231d]">
       <div className="container-shell grid gap-14 lg:grid-cols-2 lg:items-center">
         <div><SectionHeading eyebrow="About us" title="A product partner for ambitious people and organizations." copy="TheMonarkWebServices helps startups, businesses, entrepreneurs, organizations, and individuals turn promising ideas into reliable digital products."/><p className="muted mt-5 leading-7">We care about the details users notice and the foundations they never see: strong information architecture, maintainable code, secure implementation, fast experiences, and systems ready to evolve. Every engagement is grounded in quality, scalability, and open communication.</p><div className="mt-8"><PrimaryLink href="#contact">Talk about your idea</PrimaryLink></div></div>
-        <div className="relative rounded-[32px] bg-[#cfdfd3] p-7 sm:p-10"><div className="absolute right-0 top-0 size-40 rounded-full bg-emerald-300/25 blur-3xl"/><p className="relative text-sm font-bold text-emerald-800">THE MONARK STANDARD</p><div className="relative mt-7 grid gap-4 sm:grid-cols-2">{["Business-aware decisions","Excellent user experience","Maintainable foundations","Measurable performance"].map((x,i)=><div key={x} className="rounded-2xl bg-[#f5f8f5] p-5 shadow-sm"><span className="grid size-8 place-items-center rounded-full bg-slate-950 text-cyan-300"><Check size={15}/></span><p className="mt-5 font-extrabold">{x}</p><p className="muted mt-2 text-xs leading-5">{["We connect technical choices to real goals.","We make complex products feel simple.","We build for the team that inherits the code.","We treat speed and quality as product features."][i]}</p></div>)}</div></div>
+        <div className="relative rounded-[32px] border border-white/10 bg-[#203129] p-7 sm:p-10"><div className="absolute right-0 top-0 size-40 rounded-full bg-emerald-300/10 blur-3xl"/><p className="relative text-sm font-bold text-emerald-300">THE MONARK STANDARD</p><div className="relative mt-7 grid gap-4 sm:grid-cols-2">{["Business-aware decisions","Excellent user experience","Maintainable foundations","Measurable performance"].map((x,i)=><div key={x} className="rounded-2xl border border-white/10 bg-[#18261f] p-5 shadow-sm"><span className="grid size-8 place-items-center rounded-full bg-slate-950 text-emerald-300"><Check size={15}/></span><p className="mt-5 font-extrabold">{x}</p><p className="muted mt-2 text-xs leading-5">{["We connect technical choices to real goals.","We make complex products feel simple.","We build for the team that inherits the code.","We treat speed and quality as product features."][i]}</p></div>)}</div></div>
       </div>
     </section>
 
-    <section id="contact" className="section border-t border-emerald-950/10 bg-[#d9e8dc]">
+    <section id="contact" className="section border-t border-white/10 bg-[#17251f]">
       <div className="container-shell grid gap-12 lg:grid-cols-[.75fr_1.25fr]">
         <div><SectionHeading eyebrow="Start a project" title="Have an idea? Let’s build it." copy="Tell us what you’re planning and let TheMonarkWebServices turn it into a powerful digital product."/><div className="mt-9 space-y-5">{["A thoughtful response, not a generic sales pitch","Clear next steps and project-fit guidance","Your information stays private"].map(x=><p className="flex gap-3 text-sm font-semibold" key={x}><Check className="shrink-0 text-blue-600" size={18}/>{x}</p>)}</div><div className="mt-10 rounded-2xl border border-slate-200 bg-white p-5"><p className="text-xs font-bold tracking-widest text-slate-400 uppercase">Prefer email?</p><a href={`mailto:${siteConfig.email}`} className="mt-2 block break-all font-bold text-blue-600">{siteConfig.email}</a></div></div>
         <ContactForm/>
