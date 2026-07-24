@@ -145,9 +145,14 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={bankingNavItems} label="Banking" />
-                <NavMain items={moneyNavItems} label="Money tools" />
-                {auth.isAdmin && <NavMain items={adminNavItems} label="Administration" />}
+                {auth.isAdmin ? (
+                    <NavMain items={adminNavItems} label="Administration" />
+                ) : (
+                    <>
+                        <NavMain items={bankingNavItems} label="Banking" />
+                        <NavMain items={moneyNavItems} label="Money tools" />
+                    </>
+                )}
             </SidebarContent>
 
             <SidebarFooter>

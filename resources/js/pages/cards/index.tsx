@@ -79,7 +79,7 @@ function CardForm({ action, accounts, buttonText, processingText }: { action: st
 
 function DebitCardTile({ card, onReveal, onCancel, revealing }: { card: DebitCard; onReveal: (card: DebitCard) => void; onCancel: (card: DebitCard) => void; revealing: boolean }) {
     const isActive = card.status === 'active';
-    return <div className={`relative min-h-52 overflow-hidden rounded-2xl p-5 text-white shadow-lg ${card.type === 'virtual' ? 'bg-gradient-to-br from-teal-600 via-cyan-700 to-slate-950' : 'bg-gradient-to-br from-slate-700 via-slate-800 to-slate-950'}`}>
+    return <div className={`relative min-h-44 overflow-hidden rounded-xl p-4 text-white shadow-lg ${card.type === 'virtual' ? 'bg-gradient-to-br from-teal-600 via-cyan-700 to-slate-950' : 'bg-gradient-to-br from-slate-700 via-slate-800 to-slate-950'}`}>
         <div className="absolute -right-8 -top-10 size-36 rounded-full bg-white/10" /><div className="absolute -bottom-12 left-10 size-36 rounded-full bg-brand/30 blur-2xl" />
         <div className="relative flex items-start justify-between gap-3"><span className="text-sm font-medium tracking-wide">BLITZ</span><Badge className={isActive ? 'border-0 bg-emerald-400/20 text-emerald-100' : card.status === 'requested' ? 'border-0 bg-amber-300/20 text-amber-100' : 'border-0 bg-rose-300/20 text-rose-100'}>{isActive ? <CheckCircle2 className="size-3" /> : <Clock3 className="size-3" />}{isActive ? 'Active' : card.status === 'requested' ? 'Requested' : card.status === 'rejected' ? 'Rejected' : 'Cancelled'}</Badge></div>
         <div className="relative mt-9"><CreditCard className="size-8 text-white/80" /><p className="mt-4 font-mono text-lg tracking-[0.16em]">•••• •••• •••• {card.last_four}</p></div>

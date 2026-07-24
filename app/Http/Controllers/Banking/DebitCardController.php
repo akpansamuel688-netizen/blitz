@@ -19,7 +19,8 @@ class DebitCardController extends Controller
 
         return Inertia::render('cards/index', [
             'accounts' => $user->accounts()->orderBy('name')->get()->map(fn (Account $account) => ['id' => $account->id, 'name' => $account->name, 'type' => $account->type, 'currency' => $account->currency]),
-            'cards' => DebitCard::query()->with('account:id,name')->where('user_id', $user->id)->latest()->get()->map(fn (DebitCard $card) => [
+            'cards' => DebitCard::query()->with('account:id,name')->where('user_id', $user->id)
+                ->whereNotIn('status', ['cancelled', 'rejected'])->latest()->get()->map(fn (DebitCard $card) => [
                 'id' => $card->id, 'type' => $card->card_type, 'status' => $card->status, 'last_four' => $card->last_four,
                 'expires_at' => $card->expires_at?->format('m/y'), 'account_name' => $card->account?->name ?? 'Account',
             ]),
