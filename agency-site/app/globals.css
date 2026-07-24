@@ -3,7 +3,7 @@
 :root { --ink:#07111f; --muted:#607087; --line:#dfe7ef; --blue:#145cff; --cyan:#27d7e8; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 88px; }
-body { margin:0; overflow-x:hidden; color:var(--ink); background:#f8fbff; font-family:Arial, Helvetica, sans-serif; }
+body { margin:0; overflow-x:hidden; color:var(--ink); background:#e7f0e9; font-family:Arial, Helvetica, sans-serif; }
 ::selection { background:#bdeff8; color:#06111f; }
 a, button { -webkit-tap-highlight-color: transparent; }
 .container-shell { width:min(1180px, calc(100% - 40px)); margin-inline:auto; }
